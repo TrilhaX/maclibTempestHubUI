@@ -35,12 +35,12 @@ local tempestButton = Instance.new("TextButton")
 local UIPadding = Instance.new("UIPadding")
 
 backgroundFrame.Name = "backgroundFrame"
-backgroundFrame.Parent = ScreenGui
+backgroundFrame.Parent = game.CoreGui.RobloxGui.MaclibGui
 backgroundFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 backgroundFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 backgroundFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 backgroundFrame.BorderSizePixel = 0
-backgroundFrame.Position = UDim2.new(0.9, 0, 0.5, 0)
+backgroundFrame.Position = UDim2.new(0.98, 0, 0.5, 0)
 backgroundFrame.Size = UDim2.new(0, 100, 0, 100)
 
 UICorner1.Parent = backgroundFrame
