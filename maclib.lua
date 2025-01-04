@@ -28,50 +28,6 @@ local currentTabInstance = nil
 local tabIndex = 0
 local unloaded = false
 
-local UICorner1 = Instance.new("UICorner")
-local UICorner2 = Instance.new("UICorner")
-local backgroundFrame = Instance.new("Frame")
-local tempestButton = Instance.new("TextButton")
-local UIPadding = Instance.new("UIPadding")
-
-backgroundFrame.Name = "backgroundFrame"
-backgroundFrame.Parent = game.CoreGui.RobloxGui.MaclibGui
-backgroundFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-backgroundFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-backgroundFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-backgroundFrame.BorderSizePixel = 0
-backgroundFrame.Position = UDim2.new(0.98, 0, 0.5, 0)
-backgroundFrame.Size = UDim2.new(0, 100, 0, 100)
-
-UICorner1.Parent = backgroundFrame
-UICorner2.Parent = tempestButton
-
-tempestButton.Name = "tempestButton"
-tempestButton.Parent = backgroundFrame
-tempestButton.AnchorPoint = Vector2.new(0.5, 0.5)
-tempestButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-tempestButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-tempestButton.BorderSizePixel = 0
-tempestButton.Position = UDim2.new(0.5, 0, 0.5, 0)
-tempestButton.Size = UDim2.new(1, 0, 1, 0)
-tempestButton.Font = Enum.Font.PermanentMarker
-tempestButton.Text = "Tempest Hub"
-tempestButton.TextColor3 = Color3.fromRGB(75, 0, 130)
-tempestButton.TextScaled = true
-tempestButton.TextSize = 14.000
-tempestButton.TextWrapped = true
-
-UIPadding.Parent = backgroundFrame
-UIPadding.PaddingTop = UDim.new(0.1, 0)
-UIPadding.PaddingLeft = UDim.new(0.1, 0)
-UIPadding.PaddingRight = UDim.new(0.1, 0)
-UIPadding.PaddingBottom = UDim.new(0.1, 0)
-
-tempestButton.Activated:Connect(function()
-	local windowFrame = ScreenGui.windowFrame
-	windowFrame.Visible = not windowFrame.Visible
-end)
-
 local assets = {
 	interFont = "rbxassetid://12187365364",
 	userInfoBlurred = "rbxassetid://18824089198",
@@ -5921,5 +5877,49 @@ function MacLib:Demo()
 	tabs.Main:Select()
 	MacLib:LoadAutoLoadConfig()
 end
+
+local UICorner1 = Instance.new("UICorner")
+local UICorner2 = Instance.new("UICorner")
+local backgroundFrame = Instance.new("Frame")
+local tempestButton = Instance.new("TextButton")
+local UIPadding = Instance.new("UIPadding")
+
+backgroundFrame.Name = "backgroundFrame"
+backgroundFrame.Parent = game.CoreGui.RobloxGui.MaclibGui
+backgroundFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+backgroundFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+backgroundFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+backgroundFrame.BorderSizePixel = 0
+backgroundFrame.Position = UDim2.new(0.98, 0, 0.5, 0)
+backgroundFrame.Size = UDim2.new(0, 100, 0, 100)
+
+UICorner1.Parent = backgroundFrame
+UICorner2.Parent = tempestButton
+
+tempestButton.Name = "tempestButton"
+tempestButton.Parent = backgroundFrame
+tempestButton.AnchorPoint = Vector2.new(0.5, 0.5)
+tempestButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+tempestButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+tempestButton.BorderSizePixel = 0
+tempestButton.Position = UDim2.new(0.5, 0, 0.5, 0)
+tempestButton.Size = UDim2.new(1, 0, 1, 0)
+tempestButton.Font = Enum.Font.PermanentMarker
+tempestButton.Text = "Tempest Hub"
+tempestButton.TextColor3 = Color3.fromRGB(75, 0, 130)
+tempestButton.TextScaled = true
+tempestButton.TextSize = 14.000
+tempestButton.TextWrapped = true
+
+UIPadding.Parent = backgroundFrame
+UIPadding.PaddingTop = UDim.new(0.1, 0)
+UIPadding.PaddingLeft = UDim.new(0.1, 0)
+UIPadding.PaddingRight = UDim.new(0.1, 0)
+UIPadding.PaddingBottom = UDim.new(0.1, 0)
+
+tempestButton.Activated:Connect(function()
+	local windowFrame = ScreenGui.windowFrame
+	windowFrame.Visible = not windowFrame.Visible
+end)
 
 return MacLib
