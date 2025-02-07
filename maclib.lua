@@ -5397,7 +5397,6 @@ function MacLib:Window(Settings)
 			end,
 			Load = function(Flag, data)
 				if MacLib.Options[Flag] and data.value then
-					print("Loading Slider:", Flag, "Value:", data.value)
 					MacLib.Options[Flag]:UpdateValue(tonumber(data.value))
 				else
 					warn("Slider data.value is nil or invalid for", Flag)
