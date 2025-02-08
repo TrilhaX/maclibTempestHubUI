@@ -5392,14 +5392,12 @@ function MacLib:Window(Settings)
 				return {
 					type = "Slider", 
 					flag = Flag, 
-					value = (data.Value and tonumber(data.Value)) or 0
+					value = (data.Value and tostring(data.Value)) or false
 				}
 			end,
 			Load = function(Flag, data)
 				if MacLib.Options[Flag] and data.value then
-					MacLib.Options[Flag]:UpdateValue(tonumber(data.value))
-				else
-					warn("Slider data.value is nil or invalid for", Flag)
+					MacLib.Options[Flag]:UpdateValue(data.value)
 				end
 			end
 		},
