@@ -2593,7 +2593,7 @@ function MacLib:Window(Settings)
 					searchBox.PlaceholderText = "Search..."
 					searchBox.Text = ""
 					searchBox.TextColor3 = Color3.fromRGB(200, 200, 200)
-					searchBox.TextSize = 14
+					searchBox.TextSize = 12
 					searchBox.TextXAlignment = Enum.TextXAlignment.Left
 					searchBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 					searchBox.BackgroundTransparency = 1
@@ -2760,7 +2760,7 @@ function MacLib:Window(Settings)
 						option.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
 						option.Text = ""
 						option.TextColor3 = Color3.fromRGB(0, 0, 0)
-						option.TextSize = 14
+						option.TextSize = 12
 						option.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 						option.BackgroundTransparency = 1
 						option.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -2778,7 +2778,7 @@ function MacLib:Window(Settings)
 						optionName.Text = v
 						optionName.RichText = true
 						optionName.TextColor3 = Color3.fromRGB(255, 255, 255)
-						optionName.TextSize = 13
+						optionName.TextSize = 12
 						optionName.TextTransparency = 0.5
 						optionName.TextTruncate = Enum.TextTruncate.AtEnd
 						optionName.TextXAlignment = Enum.TextXAlignment.Left
@@ -2805,7 +2805,7 @@ function MacLib:Window(Settings)
 						checkmark.FontFace = Font.new(assets.interFont)
 						checkmark.Text = "✓"
 						checkmark.TextColor3 = Color3.fromRGB(255, 255, 255)
-						checkmark.TextSize = 13
+						checkmark.TextSize = 12
 						checkmark.TextTransparency = 1
 						checkmark.TextXAlignment = Enum.TextXAlignment.Left
 						checkmark.TextYAlignment = Enum.TextYAlignment.Top
@@ -3042,7 +3042,7 @@ function MacLib:Window(Settings)
 					colorpickerName.FontFace = Font.new(assets.interFont)
 					colorpickerName.Text = Settings.Name
 					colorpickerName.TextColor3 = Color3.fromRGB(255, 255, 255)
-					colorpickerName.TextSize = 13
+					colorpickerName.TextSize = 12
 					colorpickerName.TextTransparency = 0.5
 					colorpickerName.RichText = true
 					colorpickerName.TextTruncate = Enum.TextTruncate.AtEnd
@@ -3089,7 +3089,7 @@ function MacLib:Window(Settings)
 					interact.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
 					interact.Text = ""
 					interact.TextColor3 = Color3.fromRGB(0, 0, 0)
-					interact.TextSize = 14
+					interact.TextSize = 12
 					interact.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 					interact.BackgroundTransparency = 1
 					interact.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -3169,7 +3169,7 @@ function MacLib:Window(Settings)
 					value.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
 					value.Text = ""
 					value.TextColor3 = Color3.fromRGB(0, 0, 0)
-					value.TextSize = 14
+					value.TextSize = 12
 					value.AutoButtonColor = false
 					value.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 					value.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -3306,7 +3306,7 @@ function MacLib:Window(Settings)
 					inputName.FontFace = Font.new(assets.interFont)
 					inputName.Text = "Red"
 					inputName.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputName.TextSize = 13
+					inputName.TextSize = 12
 					inputName.TextTransparency = 0.5
 					inputName.TextTruncate = Enum.TextTruncate.AtEnd
 					inputName.TextXAlignment = Enum.TextXAlignment.Left
@@ -3390,7 +3390,7 @@ function MacLib:Window(Settings)
 					inputName1.FontFace = Font.new(assets.interFont)
 					inputName1.Text = "Green"
 					inputName1.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputName1.TextSize = 13
+					inputName1.TextSize = 12
 					inputName1.TextTransparency = 0.5
 					inputName1.TextTruncate = Enum.TextTruncate.AtEnd
 					inputName1.TextXAlignment = Enum.TextXAlignment.Left
@@ -3473,7 +3473,7 @@ function MacLib:Window(Settings)
 					inputName2.FontFace = Font.new(assets.interFont)
 					inputName2.Text = "Blue"
 					inputName2.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputName2.TextSize = 13
+					inputName2.TextSize = 12
 					inputName2.TextTransparency = 0.5
 					inputName2.TextTruncate = Enum.TextTruncate.AtEnd
 					inputName2.TextXAlignment = Enum.TextXAlignment.Left
@@ -3557,7 +3557,7 @@ function MacLib:Window(Settings)
 					inputName3.FontFace = Font.new(assets.interFont)
 					inputName3.Text = "Alpha"
 					inputName3.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputName3.TextSize = 13
+					inputName3.TextSize = 12
 					inputName3.TextTransparency = 0.5
 					inputName3.TextTruncate = Enum.TextTruncate.AtEnd
 					inputName3.TextXAlignment = Enum.TextXAlignment.Left
@@ -3639,7 +3639,7 @@ function MacLib:Window(Settings)
 					inputName4.FontFace = Font.new(assets.interFont)
 					inputName4.Text = "Hex"
 					inputName4.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputName4.TextSize = 13
+					inputName4.TextSize = 12
 					inputName4.TextTransparency = 0.5
 					inputName4.TextTruncate = Enum.TextTruncate.AtEnd
 					inputName4.TextXAlignment = Enum.TextXAlignment.Left
@@ -3826,7 +3826,7 @@ function MacLib:Window(Settings)
 					)
 					confirm.Text = "Confirm"
 					confirm.TextColor3 = Color3.fromRGB(255, 255, 255)
-					confirm.TextSize = 15
+					confirm.TextSize = 12
 					confirm.TextTransparency = 0.5
 					confirm.TextTruncate = Enum.TextTruncate.AtEnd
 					confirm.AutoButtonColor = false
@@ -3860,7 +3860,7 @@ function MacLib:Window(Settings)
 					)
 					cancel.Text = "Cancel"
 					cancel.TextColor3 = Color3.fromRGB(255, 255, 255)
-					cancel.TextSize = 15
+					cancel.TextSize = 12
 					cancel.TextTransparency = 0.5
 					cancel.TextTruncate = Enum.TextTruncate.AtEnd
 					cancel.AutoButtonColor = false
@@ -3919,7 +3919,7 @@ function MacLib:Window(Settings)
 					paragraphHeader.RichText = true
 					paragraphHeader.Text = ColorpickerFunctions.Settings.Name
 					paragraphHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
-					paragraphHeader.TextSize = 18
+					paragraphHeader.TextSize = 15
 					paragraphHeader.TextTransparency = 0.4
 					paragraphHeader.TextWrapped = true
 					paragraphHeader.TextYAlignment = Enum.TextYAlignment.Top
@@ -4333,7 +4333,7 @@ function MacLib:Window(Settings)
 					headerText.RichText = true
 					headerText.Text = HeaderFunctions.Settings.Text or HeaderFunctions.Settings.Name
 					headerText.TextColor3 = Color3.fromRGB(255, 255, 255)
-					headerText.TextSize = 16
+					headerText.TextSize = 14
 					headerText.TextTransparency = 0.3
 					headerText.TextWrapped = true
 					headerText.TextXAlignment = Enum.TextXAlignment.Left
@@ -4377,7 +4377,7 @@ function MacLib:Window(Settings)
 					labelText.RichText = true
 					labelText.Text = LabelFunctions.Settings.Text or LabelFunctions.Settings.Name -- Settings.Name Deprecated use Settings.Text
 					labelText.TextColor3 = Color3.fromRGB(255, 255, 255)
-					labelText.TextSize = 13
+					labelText.TextSize = 12
 					labelText.TextTransparency = 0.5
 					labelText.TextWrapped = true
 					labelText.TextXAlignment = Enum.TextXAlignment.Left
@@ -4469,7 +4469,7 @@ function MacLib:Window(Settings)
 					paragraphHeader.RichText = true
 					paragraphHeader.Text = ParagraphFunctions.Settings.Header
 					paragraphHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
-					paragraphHeader.TextSize = 15
+					paragraphHeader.TextSize = 12
 					paragraphHeader.TextTransparency = 0.4
 					paragraphHeader.TextWrapped = true
 					paragraphHeader.TextXAlignment = Enum.TextXAlignment.Left
@@ -4493,7 +4493,7 @@ function MacLib:Window(Settings)
 					paragraphBody.RichText = true
 					paragraphBody.Text = ParagraphFunctions.Settings.Body
 					paragraphBody.TextColor3 = Color3.fromRGB(255, 255, 255)
-					paragraphBody.TextSize = 13
+					paragraphBody.TextSize = 12
 					paragraphBody.TextTransparency = 0.5
 					paragraphBody.TextWrapped = true
 					paragraphBody.TextXAlignment = Enum.TextXAlignment.Left
@@ -4827,7 +4827,7 @@ function MacLib:Window(Settings)
 		notificationTitle.RichText = true
 		notificationTitle.Text = Settings.Title
 		notificationTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-		notificationTitle.TextSize = 13
+		notificationTitle.TextSize = 12
 		notificationTitle.TextTransparency = 0.2
 		notificationTitle.TextTruncate = Enum.TextTruncate.SplitWord
 		notificationTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -4855,7 +4855,7 @@ function MacLib:Window(Settings)
 		)
 		notificationDescription.Text = Settings.Description
 		notificationDescription.TextColor3 = Color3.fromRGB(255, 255, 255)
-		notificationDescription.TextSize = 11
+		notificationDescription.TextSize = 10
 		notificationDescription.TextTransparency = 0.5
 		notificationDescription.TextWrapped = true
 		notificationDescription.RichText = true
@@ -4900,7 +4900,7 @@ function MacLib:Window(Settings)
 		interactable.FontFace = Font.new(assets.interFont)
 		interactable.Text = "✓"
 		interactable.TextColor3 = Color3.fromRGB(255, 255, 255)
-		interactable.TextSize = 17
+		interactable.TextSize = 14
 		interactable.TextTransparency = 0.2
 		interactable.AnchorPoint = Vector2.new(1, 0.5)
 		interactable.AutomaticSize = Enum.AutomaticSize.XY
@@ -5068,7 +5068,7 @@ function MacLib:Window(Settings)
 		paragraphHeader.RichText = true
 		paragraphHeader.Text = Settings.Title
 		paragraphHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
-		paragraphHeader.TextSize = 18
+		paragraphHeader.TextSize = 14
 		paragraphHeader.TextTransparency = 0.4
 		paragraphHeader.TextWrapped = true
 		paragraphHeader.AutomaticSize = Enum.AutomaticSize.Y
@@ -5091,7 +5091,7 @@ function MacLib:Window(Settings)
 		paragraphBody.RichText = true
 		paragraphBody.Text = Settings.Description
 		paragraphBody.TextColor3 = Color3.fromRGB(255, 255, 255)
-		paragraphBody.TextSize = 14
+		paragraphBody.TextSize = 12
 		paragraphBody.TextTransparency = 0.5
 		paragraphBody.TextWrapped = true
 		paragraphBody.AutomaticSize = Enum.AutomaticSize.Y
@@ -5165,7 +5165,7 @@ function MacLib:Window(Settings)
 			button.FontFace = Font.new(assets.interFont)
 			button.Text = v.Name
 			button.TextColor3 = Color3.fromRGB(255, 255, 255)
-			button.TextSize = 15
+			button.TextSize = 12
 			button.TextTransparency = 0.5
 			button.TextTruncate = Enum.TextTruncate.AtEnd
 			button.AutoButtonColor = false
