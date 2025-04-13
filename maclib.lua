@@ -60,6 +60,9 @@ local function GetGui()
 
 	newGui.Parent = parent
 	newGui.Name = "MaclibGui"
+	
+	print("Caminho do ScreenGui: " .. newGui:GetFullName())
+
 	return newGui
 end
 
@@ -807,6 +810,13 @@ function MacLib:Window(Settings)
 	end
 
 	if not Settings.DragStyle or Settings.DragStyle == 1 then
+		interact.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				onDragStart(input)
+			end
+		end)
+
+		interact.InputChanged:Connect(onDragUpdate)
 
 		UserInputService.InputChanged:Connect(function(input)
 			if input == dragInput and dragging_ then
@@ -814,6 +824,11 @@ function MacLib:Window(Settings)
 			end
 		end)
 
+		interact.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				dragging_ = false
+			end
+		end)
 	elseif Settings.DragStyle == 2 then
 		base.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
