@@ -133,40 +133,40 @@ function MacLib:Window(Settings)
 		end
 	end)
 
-	local dragging = false
-	local dragInput, dragStart, startPos
+	local draggingBackground = false
+	local dragInputBg, dragStartBg, startPosBg
 
-	local function update(input)
-		local delta = input.Position - dragStart
-		tempestButton.Position = UDim2.new(
-			startPos.X.Scale, startPos.X.Offset + delta.X, 
-			startPos.Y.Scale, startPos.Y.Offset + delta.Y
+	local function updateBackground(input)
+		local delta = input.Position - dragStartBg
+		backgroundFrame.Position = UDim2.new(
+			startPosBg.X.Scale, startPosBg.X.Offset + delta.X,
+			startPosBg.Y.Scale, startPosBg.Y.Offset + delta.Y
 		)
 	end
 
 	tempestButton.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			dragStart = input.Position
-			startPos = tempestButton.Position
-			
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			draggingBackground = true
+			dragStartBg = input.Position
+			startPosBg = backgroundFrame.Position
+
 			input.Changed:Connect(function()
 				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
+					draggingBackground = false
 				end
 			end)
 		end
 	end)
 
 	tempestButton.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-			dragInput = input
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInputBg = input
 		end
 	end)
 
 	UserInputService.InputChanged:Connect(function(input)
-		if input == dragInput and dragging then
-			update(input)
+		if draggingBackground and input == dragInputBg then
+			updateBackground(input)
 		end
 	end)
 
@@ -919,42 +919,43 @@ function MacLib:Window(Settings)
 
 	content.Parent = base
 
-	local draggingUI = false
-	local dragInputUI, dragStartUI, startPosUI
-	
-	function update(input)
-		local delta = input.Position - dragStartUI
-		topbar.Position = UDim2.new(
-			startPosUI.X.Scale, startPosUI.X.Offset + delta.X,
-			startPosUI.Y.Scale, startPosUI.Y.Offset + delta.Y
+	local draggingBase = false
+	local dragInputBase, dragStartBase, startPosBase
+
+	local function updateBase(input)
+		local delta = input.Position - dragStartBase
+		base.Position = UDim2.new(
+			startPosBase.X.Scale, startPosBase.X.Offset + delta.X,
+			startPosBase.Y.Scale, startPosBase.Y.Offset + delta.Y
 		)
-	end	
-	
+	end
+
 	topbar.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			draggingUI = true
-			dragStartUI = input.Position
-			startPosUI = topbar.Position
-	
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			draggingBase = true
+			dragStartBase = input.Position
+			startPosBase = base.Position
+
 			input.Changed:Connect(function()
 				if input.UserInputState == Enum.UserInputState.End then
-					draggingUI = false
+					draggingBase = false
 				end
 			end)
 		end
 	end)
-	
+
 	topbar.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-			dragInputUI = input
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInputBase = input
 		end
 	end)
-	
+
 	UserInputService.InputChanged:Connect(function(input)
-		if input == dragInputUI and draggingUI then
-			update(input)
+		if draggingBase and input == dragInputBase then
+			updateBase(input)
 		end
-	end)	
+	end)
+
 
 	local globalSettings = Instance.new("Frame")
 	globalSettings.Name = "GlobalSettings"
