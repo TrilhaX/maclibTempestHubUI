@@ -81,6 +81,48 @@ function MacLib:Window(Settings)
 
 	local macLib = GetGui()
 
+	backgroundFrame.Name = "backgroundFrame"
+	backgroundFrame.Parent = maclib
+	backgroundFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+	backgroundFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	backgroundFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	backgroundFrame.BorderSizePixel = 0
+	backgroundFrame.Position = UDim2.new(0.98, 0, 0.5, 0)
+	backgroundFrame.Size = UDim2.new(0, 100, 0, 100)
+
+	UICorner1.Parent = backgroundFrame
+
+	tempestButton.Name = "tempestButton"
+	tempestButton.Parent = backgroundFrame
+	tempestButton.AnchorPoint = Vector2.new(0.5, 0.5)
+	tempestButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	tempestButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	tempestButton.BorderSizePixel = 0
+	tempestButton.Position = UDim2.new(0.5, 0, 0.5, 0)
+	tempestButton.Size = UDim2.new(1, 0, 1, 0)
+	tempestButton.Font = Enum.Font.PermanentMarker
+	tempestButton.Text = "Tempest Hub"
+	tempestButton.TextColor3 = Color3.fromRGB(75, 0, 130)
+	tempestButton.TextScaled = true
+	tempestButton.TextSize = 14.000
+	tempestButton.TextWrapped = true
+
+	UIPadding.Parent = backgroundFrame
+	UIPadding.PaddingTop = UDim.new(0.1, 0)
+	UIPadding.PaddingLeft = UDim.new(0.1, 0)
+	UIPadding.PaddingRight = UDim.new(0.1, 0)
+	UIPadding.PaddingBottom = UDim.new(0.1, 0)
+
+	tempestButton.Activated:Connect(function()
+		local maclib = maclibGui
+		if maclib then
+			maclib.Base.Visible = not maclib.Base.Visible
+			maclib.Notifications.Visible = not maclib.Notifications.Visible
+		else
+			warn("MaclibGui not found when button was clicked.")
+		end
+	end)
+
 	local notifications = Instance.new("Frame")
 	notifications.Name = "Notifications"
 	notifications.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -810,10 +852,23 @@ function MacLib:Window(Settings)
 	end
 
 	if not Settings.DragStyle or Settings.DragStyle == 1 then
+		interact.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				onDragStart(input)
+			end
+		end)
+
+		interact.InputChanged:Connect(onDragUpdate)
 
 		UserInputService.InputChanged:Connect(function(input)
 			if input == dragInput and dragging_ then
 				update(input)
+			end
+		end)
+
+		interact.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				dragging_ = false
 			end
 		end)
 	elseif Settings.DragStyle == 2 then
