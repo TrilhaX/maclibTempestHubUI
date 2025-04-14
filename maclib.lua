@@ -69,6 +69,14 @@ local function Tween(instance, tweeninfo, propertytable)
 end
 
 --// Library Functions
+function Maclib:HideUI()
+	local macLib = GetGui()
+
+	if macLib then
+		maclib.Enabled = false
+	end
+end
+
 function MacLib:Window(Settings)
 	local WindowFunctions = {Settings = Settings}
 	if Settings.AcrylicBlur ~= nil then
@@ -90,7 +98,7 @@ function MacLib:Window(Settings)
 	backgroundFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 	backgroundFrame.BorderSizePixel = 0
 	backgroundFrame.Position = UDim2.new(0.98, 0, 0.5, 0)
-	backgroundFrame.Size = UDim2.new(0, 100, 0, 100)
+	backgroundFrame.Size = UDim2.new(0, 60, 0, 60)
 
 	UICorner1.Parent = backgroundFrame
 
@@ -122,6 +130,43 @@ function MacLib:Window(Settings)
 			maclibGui.Notifications.Visible = not maclibGui.Notifications.Visible
 		else
 			warn("MaclibGui not found when button was clicked.")
+		end
+	end)
+
+	local dragging = false
+	local dragInput, dragStart, startPos
+
+	local function update(input)
+		local delta = input.Position - dragStart
+		backgroundFrame.Position = UDim2.new(
+			startPos.X.Scale, startPos.X.Offset + delta.X, 
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y
+		)
+	end
+
+	backgroundFrame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = backgroundFrame.Position
+			
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	backgroundFrame.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			update(input)
 		end
 	end)
 
@@ -160,43 +205,6 @@ function MacLib:Window(Settings)
 	base.BorderSizePixel = 0
 	base.Position = UDim2.fromScale(0.5, 0.5)
 	base.Size = Settings.Size or UDim2.fromOffset(868, 650)
-	
-	local dragging = false
-	local dragInput, dragStart, startPos
-	
-	function update(input)
-		local delta = input.Position - dragStart
-		base.Position = UDim2.new(
-			startPos.X.Scale, startPos.X.Offset + delta.X,
-			startPos.Y.Scale, startPos.Y.Offset + delta.Y
-		)
-	end	
-	
-	base.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			dragStart = input.Position
-			startPos = base.Position
-	
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-				end
-			end)
-		end
-	end)
-	
-	base.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-			dragInput = input
-		end
-	end)
-	
-	UserInputService.InputChanged:Connect(function(input)
-		if input == dragInput and dragging then
-			update(input)
-		end
-	end)	
 
 	local baseUIScale = Instance.new("UIScale")
 	baseUIScale.Name = "BaseUIScale"
@@ -910,6 +918,43 @@ function MacLib:Window(Settings)
 	topbar.Parent = content
 
 	content.Parent = base
+
+	local draggingUI = false
+	local dragInputUI, dragStartUI, startPosUI
+	
+	function update(input)
+		local delta = input.Position - dragStartUI
+		topbar.Position = UDim2.new(
+			startPosUI.X.Scale, startPosUI.X.Offset + delta.X,
+			startPosUI.Y.Scale, startPosUI.Y.Offset + delta.Y
+		)
+	end	
+	
+	topbar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			draggingUI = true
+			dragStartUI = input.Position
+			startPos = topbar.Position
+	
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					draggingUI = false
+				end
+			end)
+		end
+	end)
+	
+	topbar.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInputUI = input
+		end
+	end)
+	
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInputUI and draggingUI then
+			update(input)
+		end
+	end)	
 
 	local globalSettings = Instance.new("Frame")
 	globalSettings.Name = "GlobalSettings"
