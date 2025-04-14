@@ -60,8 +60,6 @@ local function GetGui()
 
 	newGui.Parent = parent
 	newGui.Name = "MaclibGui"
-	
-	print("Caminho do ScreenGui: " .. newGui:GetFullName())
 
 	return newGui
 end
@@ -81,13 +79,12 @@ function MacLib:Window(Settings)
 
 	local macLib = GetGui()
 
-
 	local UICorner1 = Instance.new("UICorner")
 	local backgroundFrame = Instance.new("Frame")
 	local tempestButton = Instance.new("TextButton")
 	local UIPadding = Instance.new("UIPadding")
 	backgroundFrame.Name = "backgroundFrame"
-	backgroundFrame.Parent = maclib
+	backgroundFrame.Parent = macLib
 	backgroundFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 	backgroundFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 	backgroundFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -119,10 +116,10 @@ function MacLib:Window(Settings)
 	UIPadding.PaddingBottom = UDim.new(0.1, 0)
 
 	tempestButton.Activated:Connect(function()
-		local maclib = maclibGui
-		if maclib then
-			maclib.Base.Visible = not maclib.Base.Visible
-			maclib.Notifications.Visible = not maclib.Notifications.Visible
+		local maclibGui = macLib
+		if maclibGui then
+			maclibGui.Base.Visible = not maclibGui.Base.Visible
+			maclibGui.Notifications.Visible = not maclibGui.Notifications.Visible
 		else
 			warn("MaclibGui not found when button was clicked.")
 		end
