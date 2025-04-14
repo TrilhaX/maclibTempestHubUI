@@ -81,6 +81,11 @@ function MacLib:Window(Settings)
 
 	local macLib = GetGui()
 
+
+	local UICorner1 = Instance.new("UICorner")
+	local backgroundFrame = Instance.new("Frame")
+	local tempestButton = Instance.new("TextButton")
+	local UIPadding = Instance.new("UIPadding")
 	backgroundFrame.Name = "backgroundFrame"
 	backgroundFrame.Parent = maclib
 	backgroundFrame.AnchorPoint = Vector2.new(0.5, 0.5)
