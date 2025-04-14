@@ -73,7 +73,7 @@ function Maclib:HideUI()
 	local macLib = GetGui()
 
 	if macLib then
-		maclib.Enabled = false
+		macLib.Enabled = false
 	end
 end
 
