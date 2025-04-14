@@ -138,17 +138,17 @@ function MacLib:Window(Settings)
 
 	local function update(input)
 		local delta = input.Position - dragStart
-		backgroundFrame.Position = UDim2.new(
+		tempestButton.Position = UDim2.new(
 			startPos.X.Scale, startPos.X.Offset + delta.X, 
 			startPos.Y.Scale, startPos.Y.Offset + delta.Y
 		)
 	end
 
-	backgroundFrame.InputBegan:Connect(function(input)
+	tempestButton.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = true
 			dragStart = input.Position
-			startPos = backgroundFrame.Position
+			startPos = tempestButton.Position
 			
 			input.Changed:Connect(function()
 				if input.UserInputState == Enum.UserInputState.End then
@@ -158,7 +158,7 @@ function MacLib:Window(Settings)
 		end
 	end)
 
-	backgroundFrame.InputChanged:Connect(function(input)
+	tempestButton.InputChanged:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
 			dragInput = input
 		end
@@ -934,7 +934,7 @@ function MacLib:Window(Settings)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			draggingUI = true
 			dragStartUI = input.Position
-			startPos = topbar.Position
+			startPosUI = topbar.Position
 	
 			input.Changed:Connect(function()
 				if input.UserInputState == Enum.UserInputState.End then
