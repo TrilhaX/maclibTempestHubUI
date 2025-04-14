@@ -69,11 +69,11 @@ local function Tween(instance, tweeninfo, propertytable)
 end
 
 --// Library Functions
-function Maclib:HideUI()
+function Maclib:HideUI(state)
 	local macLib = GetGui()
 
 	if macLib then
-		macLib.Enabled = false
+		macLib.Enabled = not state
 	end
 end
 
