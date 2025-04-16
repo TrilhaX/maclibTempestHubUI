@@ -69,11 +69,11 @@ local function Tween(instance, tweeninfo, propertytable)
 end
 
 --// Library Functions
-function MacLib:HideUI(state)
-	local macLib = GetGui()
+local macLib = GetGui()
 
+function MacLib:HideUI(state)
 	if macLib then
-		macLib.Enabled = not state
+		macLib.Base.Visible = not state
 	end
 end
 
@@ -84,8 +84,6 @@ function MacLib:Window(Settings)
 	else
 		acrylicBlur = true
 	end
-
-	local macLib = GetGui()
 
 	local UICorner1 = Instance.new("UICorner")
 	local backgroundFrame = Instance.new("Frame")
