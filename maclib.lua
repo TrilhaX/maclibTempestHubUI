@@ -77,6 +77,48 @@ function MacLib:HideUI(state)
 	end
 end
 
+function isMobile()
+	return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+end
+
+function getBaseSize()
+	return isMobile() and mobileSize2 or pcSize2
+end
+
+function storeOriginalFrameSizes(guiObject)
+	for _, obj in ipairs(guiObject:GetDescendants()) do
+		if obj:IsA("Frame") then
+			if not originalSizes[obj] then
+				originalSizes[obj] = obj.Size
+			end
+		end
+	end
+end
+
+function MacLib:changeUISize(scale)
+	local gui = macLib
+	if not gui then
+		return
+	end
+
+	storeOriginalFrameSizes(gui)
+
+	local baseSize = getBaseSize()
+	local widthScale = (baseSize.X * scale) / baseSize.X
+	local heightScale = (baseSize.Y * scale) / baseSize.Y
+
+	for frame, originalSize in pairs(originalSizes) do
+		if frame and frame.Parent then
+			frame.Size = UDim2.new(
+				originalSize.X.Scale,
+				math.floor(originalSize.X.Offset * widthScale),
+				originalSize.Y.Scale,
+				math.floor(originalSize.Y.Offset * heightScale)
+			)
+		end
+	end
+end
+
 function MacLib:Window(Settings)
 	local WindowFunctions = {Settings = Settings}
 	if Settings.AcrylicBlur ~= nil then
@@ -143,7 +185,8 @@ function MacLib:Window(Settings)
 	end
 
 	tempestButton.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
 			draggingBackground = true
 			dragStartBg = input.Position
 			startPosBg = backgroundFrame.Position
@@ -157,7 +200,8 @@ function MacLib:Window(Settings)
 	end)
 
 	tempestButton.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
+		if input.UserInputType == Enum.UserInputType.MouseMovement
+		or input.UserInputType == Enum.UserInputType.Touch then
 			dragInputBg = input
 		end
 	end)
@@ -929,7 +973,8 @@ function MacLib:Window(Settings)
 	end
 
 	topbar.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 
+		or input.UserInputType == Enum.UserInputType.Touch then
 			draggingBase = true
 			dragStartBase = input.Position
 			startPosBase = base.Position
@@ -943,7 +988,8 @@ function MacLib:Window(Settings)
 	end)
 
 	topbar.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
+		if (input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch) then
 			dragInputBase = input
 		end
 	end)
@@ -953,7 +999,6 @@ function MacLib:Window(Settings)
 			updateBase(input)
 		end
 	end)
-
 
 	local globalSettings = Instance.new("Frame")
 	globalSettings.Name = "GlobalSettings"
