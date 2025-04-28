@@ -119,6 +119,86 @@ function MacLib:changeUISize(scale)
 	end
 end
 
+function MacLib:lowCpuUsage(value)
+	if value == true then
+		game:GetService("RunService"):Set3dRenderingEnabled(false)
+	elseif value == false then
+		game:GetService("RunService"):Set3dRenderingEnabled(true)
+	end
+end
+
+function fpsBoostFunction()
+	local Lighting = game:GetService("Lighting")
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local player = Players.LocalPlayer
+	local playerGui = player:WaitForChild("PlayerGui")
+
+	local function optimizeGame()
+		for _, obj in pairs(workspace:GetDescendants()) do
+			if obj:IsA("Texture") or obj:IsA("Decal") then
+				obj:Destroy()
+			elseif obj:IsA("BasePart") then
+				obj.Material = Enum.Material.SmoothPlastic
+				obj.Color = Color3.new(0.5, 0.5, 0.5)
+			end
+		end
+
+		if Lighting:FindFirstChildOfClass("Sky") then
+			Lighting:FindFirstChildOfClass("Sky"):Destroy()
+		end
+
+		for _, player in pairs(Players:GetPlayers()) do
+			if player.Character then
+				for _, obj in pairs(player.Character:GetChildren()) do
+					if obj:IsA("Shirt") or obj:IsA("Pants") or obj:IsA("Accessory") then
+						obj:Destroy()
+					end
+				end
+			end
+		end
+	end
+
+	optimizeGame()
+end
+
+function MacLib:FPSBoost(value)
+	if value == true then
+		fpsBoostFunction()
+	end
+end
+
+function HidePlayerFunction()
+	local player = game.Players.LocalPlayer
+	local character = player.Character
+
+	if character then
+		local head = character.Head
+		local humanoidrootpart = character.HumanoidRootPart
+		for i, v in pairs(head:GetChildren()) do
+			if v.ClassName == "BillboardGui" or v.ClassName == "Decal" then
+				v:Destroy()
+			end
+		end
+		for i, v in pairs(humanoidrootpart:GetChildren()) do
+			if v.ClassName == "BillboardGui" or v.ClassName == "Decal" then
+				v:Destroy()
+			end
+		end
+		for _, obj in ipairs(character:GetChildren()) do
+			if obj:IsA("Accessory") or obj:IsA("Shirt") or obj:IsA("Pants") then
+				obj:Destroy()
+			end
+		end
+	end
+end
+
+function MacLib:HidePlayer(value)
+	if value == true then
+		HidePlayerFunction()
+	end
+end
+
 function MacLib:Window(Settings)
 	local WindowFunctions = {Settings = Settings}
 	if Settings.AcrylicBlur ~= nil then
@@ -154,7 +234,7 @@ function MacLib:Window(Settings)
 	tempestButton.Text = "Tempest Hub"
 	tempestButton.TextColor3 = Color3.fromRGB(75, 0, 130)
 	tempestButton.TextScaled = true
-	tempestButton.TextSize = 14.000
+	tempestButton.TextSize = 14
 	tempestButton.TextWrapped = true
 
 	UIPadding.Parent = backgroundFrame
@@ -285,19 +365,35 @@ function MacLib:Window(Settings)
 	divider.Parent = sidebar
 
 	local dividerInteract = Instance.new("TextButton")
-	dividerInteract.Name = "DividerInteract"
-	dividerInteract.AnchorPoint = Vector2.new(0.5, 0)
-	dividerInteract.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	dividerInteract.BackgroundTransparency = 1
-	dividerInteract.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	dividerInteract.BorderSizePixel = 0
-	dividerInteract.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-	dividerInteract.Position = UDim2.fromScale(0.5, 0)
-	dividerInteract.Size = UDim2.new(1, 6, 1, 0)
-	dividerInteract.Text = ""
-	dividerInteract.TextColor3 = Color3.fromRGB(0, 0, 0)
-	dividerInteract.TextSize = 12
-	dividerInteract.Parent = divider
+	if isMobile() then
+		dividerInteract.Name = "DividerInteract"
+		dividerInteract.AnchorPoint = Vector2.new(0.5, 0)
+		dividerInteract.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		dividerInteract.BackgroundTransparency = 1
+		dividerInteract.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		dividerInteract.BorderSizePixel = 0
+		dividerInteract.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+		dividerInteract.Position = UDim2.fromScale(0.5, 0)
+		dividerInteract.Size = UDim2.new(1, 6, 1, 0)
+		dividerInteract.Text = ""
+		dividerInteract.TextColor3 = Color3.fromRGB(0, 0, 0)
+		dividerInteract.TextSize = 10
+		dividerInteract.Parent = divider
+	else
+		dividerInteract.Name = "DividerInteract"
+		dividerInteract.AnchorPoint = Vector2.new(0.5, 0)
+		dividerInteract.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		dividerInteract.BackgroundTransparency = 1
+		dividerInteract.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		dividerInteract.BorderSizePixel = 0
+		dividerInteract.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+		dividerInteract.Position = UDim2.fromScale(0.5, 0)
+		dividerInteract.Size = UDim2.new(1, 6, 1, 0)
+		dividerInteract.Text = ""
+		dividerInteract.TextColor3 = Color3.fromRGB(0, 0, 0)
+		dividerInteract.TextSize = 12
+		dividerInteract.Parent = divider
+	end
 
 	local windowControls = Instance.new("Frame")
 	windowControls.Name = "WindowControls"
@@ -341,15 +437,27 @@ function MacLib:Window(Settings)
 	stroke.Transparency = windowControlSettings.strokeTransparency
 
 	local exit = Instance.new("TextButton")
-	exit.Name = "Exit"
-	exit.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-	exit.Text = ""
-	exit.TextColor3 = Color3.fromRGB(0, 0, 0)
-	exit.TextSize = 12
-	exit.AutoButtonColor = false
-	exit.BackgroundColor3 = Color3.fromRGB(250, 93, 86)
-	exit.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	exit.BorderSizePixel = 0
+	if isMobile() then
+		exit.Name = "Exit"
+		exit.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+		exit.Text = ""
+		exit.TextColor3 = Color3.fromRGB(0, 0, 0)
+		exit.TextSize = 10
+		exit.AutoButtonColor = false
+		exit.BackgroundColor3 = Color3.fromRGB(250, 93, 86)
+		exit.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		exit.BorderSizePixel = 0
+	else
+		exit.Name = "Exit"
+		exit.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+		exit.Text = ""
+		exit.TextColor3 = Color3.fromRGB(0, 0, 0)
+		exit.TextSize = 12
+		exit.AutoButtonColor = false
+		exit.BackgroundColor3 = Color3.fromRGB(250, 93, 86)
+		exit.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		exit.BorderSizePixel = 0
+	end
 
 	local uICorner = Instance.new("UICorner")
 	uICorner.Name = "UICorner"
@@ -359,16 +467,29 @@ function MacLib:Window(Settings)
 	exit.Parent = controls
 
 	local minimize = Instance.new("TextButton")
-	minimize.Name = "Minimize"
-	minimize.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-	minimize.Text = ""
-	minimize.TextColor3 = Color3.fromRGB(0, 0, 0)
-	minimize.TextSize = 12
-	minimize.AutoButtonColor = false
-	minimize.BackgroundColor3 = Color3.fromRGB(252, 190, 57)
-	minimize.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	minimize.BorderSizePixel = 0
-	minimize.LayoutOrder = 1
+	if isMobile() then
+		minimize.Name = "Minimize"
+		minimize.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+		minimize.Text = ""
+		minimize.TextColor3 = Color3.fromRGB(0, 0, 0)
+		minimize.TextSize = 10
+		minimize.AutoButtonColor = false
+		minimize.BackgroundColor3 = Color3.fromRGB(252, 190, 57)
+		minimize.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		minimize.BorderSizePixel = 0
+		minimize.LayoutOrder = 1
+	else
+		minimize.Name = "Minimize"
+		minimize.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+		minimize.Text = ""
+		minimize.TextColor3 = Color3.fromRGB(0, 0, 0)
+		minimize.TextSize = 12
+		minimize.AutoButtonColor = false
+		minimize.BackgroundColor3 = Color3.fromRGB(252, 190, 57)
+		minimize.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		minimize.BorderSizePixel = 0
+		minimize.LayoutOrder = 1
+	end
 
 	local uICorner1 = Instance.new("UICorner")
 	uICorner1.Name = "UICorner"
@@ -378,16 +499,29 @@ function MacLib:Window(Settings)
 	minimize.Parent = controls
 
 	local maximize = Instance.new("TextButton")
-	maximize.Name = "Maximize"
-	maximize.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-	maximize.Text = ""
-	maximize.TextColor3 = Color3.fromRGB(0, 0, 0)
-	maximize.TextSize = 12
-	maximize.AutoButtonColor = false
-	maximize.BackgroundColor3 = Color3.fromRGB(119, 174, 94)
-	maximize.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	maximize.BorderSizePixel = 0
-	maximize.LayoutOrder = 1
+	if isMobile() then
+		maximize.Name = "Maximize"
+		maximize.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+		maximize.Text = ""
+		maximize.TextColor3 = Color3.fromRGB(0, 0, 0)
+		maximize.TextSize = 10
+		maximize.AutoButtonColor = false
+		maximize.BackgroundColor3 = Color3.fromRGB(119, 174, 94)
+		maximize.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		maximize.BorderSizePixel = 0
+		maximize.LayoutOrder = 1
+	else
+		maximize.Name = "Maximize"
+		maximize.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+		maximize.Text = ""
+		maximize.TextColor3 = Color3.fromRGB(0, 0, 0)
+		maximize.TextSize = 12
+		maximize.AutoButtonColor = false
+		maximize.BackgroundColor3 = Color3.fromRGB(119, 174, 94)
+		maximize.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		maximize.BorderSizePixel = 0
+		maximize.LayoutOrder = 1
+	end
 
 	local uICorner2 = Instance.new("UICorner")
 	uICorner2.Name = "UICorner"
@@ -527,21 +661,39 @@ function MacLib:Window(Settings)
 		Enum.FontWeight.SemiBold,
 		Enum.FontStyle.Normal
 	)
-	title.Text = Settings.Title
-	title.TextColor3 = Color3.fromRGB(255, 255, 255)
-	title.RichText = true
-	title.TextSize = 15
-	title.TextTransparency = 0.1
-	title.TextTruncate = Enum.TextTruncate.SplitWord
-	title.TextXAlignment = Enum.TextXAlignment.Left
-	title.TextYAlignment = Enum.TextYAlignment.Top
-	title.AutomaticSize = Enum.AutomaticSize.Y
-	title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	title.BackgroundTransparency = 1
-	title.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	title.BorderSizePixel = 0
-	title.Size = UDim2.new(1, -20, 0, 0)
-	title.Parent = titleFrame
+	if isMobile() then
+		title.Text = Settings.Title
+		title.TextColor3 = Color3.fromRGB(255, 255, 255)
+		title.RichText = true
+		title.TextSize = 13
+		title.TextTransparency = 0.1
+		title.TextTruncate = Enum.TextTruncate.SplitWord
+		title.TextXAlignment = Enum.TextXAlignment.Left
+		title.TextYAlignment = Enum.TextYAlignment.Top
+		title.AutomaticSize = Enum.AutomaticSize.Y
+		title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		title.BackgroundTransparency = 1
+		title.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		title.BorderSizePixel = 0
+		title.Size = UDim2.new(1, -20, 0, 0)
+		title.Parent = titleFrame
+	else
+		title.Text = Settings.Title
+		title.TextColor3 = Color3.fromRGB(255, 255, 255)
+		title.RichText = true
+		title.TextSize = 15
+		title.TextTransparency = 0.1
+		title.TextTruncate = Enum.TextTruncate.SplitWord
+		title.TextXAlignment = Enum.TextXAlignment.Left
+		title.TextYAlignment = Enum.TextYAlignment.Top
+		title.AutomaticSize = Enum.AutomaticSize.Y
+		title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		title.BackgroundTransparency = 1
+		title.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		title.BorderSizePixel = 0
+		title.Size = UDim2.new(1, -20, 0, 0)
+		title.Parent = titleFrame
+	end
 
 	local subtitle = Instance.new("TextLabel")
 	subtitle.Name = "Subtitle"
@@ -550,23 +702,43 @@ function MacLib:Window(Settings)
 		Enum.FontWeight.Medium,
 		Enum.FontStyle.Normal
 	)
-	subtitle.RichText = true
-	subtitle.Text = Settings.Subtitle
-	subtitle.RichText = true
-	subtitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-	subtitle.TextSize = 12
-	subtitle.TextTransparency = 0.7
-	subtitle.TextTruncate = Enum.TextTruncate.SplitWord
-	subtitle.TextXAlignment = Enum.TextXAlignment.Left
-	subtitle.TextYAlignment = Enum.TextYAlignment.Top
-	subtitle.AutomaticSize = Enum.AutomaticSize.Y
-	subtitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	subtitle.BackgroundTransparency = 1
-	subtitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	subtitle.BorderSizePixel = 0
-	subtitle.LayoutOrder = 1
-	subtitle.Size = UDim2.new(1, -20, 0, 0)
-	subtitle.Parent = titleFrame
+	if isMobile() then
+		subtitle.RichText = true
+		subtitle.Text = Settings.Subtitle
+		subtitle.RichText = true
+		subtitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+		subtitle.TextSize = 10
+		subtitle.TextTransparency = 0.7
+		subtitle.TextTruncate = Enum.TextTruncate.SplitWord
+		subtitle.TextXAlignment = Enum.TextXAlignment.Left
+		subtitle.TextYAlignment = Enum.TextYAlignment.Top
+		subtitle.AutomaticSize = Enum.AutomaticSize.Y
+		subtitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		subtitle.BackgroundTransparency = 1
+		subtitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		subtitle.BorderSizePixel = 0
+		subtitle.LayoutOrder = 1
+		subtitle.Size = UDim2.new(1, -20, 0, 0)
+		subtitle.Parent = titleFrame
+	else
+		subtitle.RichText = true
+		subtitle.Text = Settings.Subtitle
+		subtitle.RichText = true
+		subtitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+		subtitle.TextSize = 12
+		subtitle.TextTransparency = 0.7
+		subtitle.TextTruncate = Enum.TextTruncate.SplitWord
+		subtitle.TextXAlignment = Enum.TextXAlignment.Left
+		subtitle.TextYAlignment = Enum.TextYAlignment.Top
+		subtitle.AutomaticSize = Enum.AutomaticSize.Y
+		subtitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		subtitle.BackgroundTransparency = 1
+		subtitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		subtitle.BorderSizePixel = 0
+		subtitle.LayoutOrder = 1
+		subtitle.Size = UDim2.new(1, -20, 0, 0)
+		subtitle.Parent = titleFrame
+	end
 
 	local titleFrameUIListLayout = Instance.new("UIListLayout")
 	titleFrameUIListLayout.Name = "TitleFrameUIListLayout"
@@ -665,20 +837,37 @@ function MacLib:Window(Settings)
 		Enum.FontWeight.SemiBold,
 		Enum.FontStyle.Normal
 	)
-	displayName.Text = LocalPlayer.DisplayName
-	displayName.TextColor3 = Color3.fromRGB(255, 255, 255)
-	displayName.TextSize = 12
-	displayName.TextTransparency = 0.1
-	displayName.TextTruncate = Enum.TextTruncate.SplitWord
-	displayName.TextXAlignment = Enum.TextXAlignment.Left
-	displayName.TextYAlignment = Enum.TextYAlignment.Top
-	displayName.AutomaticSize = Enum.AutomaticSize.XY
-	displayName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	displayName.BackgroundTransparency = 1
-	displayName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	displayName.BorderSizePixel = 0
-	displayName.Parent = userAndDisplayFrame
-	displayName.Size = UDim2.fromScale(1,0)
+	if isMobile() then
+		displayName.Text = LocalPlayer.DisplayName
+		displayName.TextColor3 = Color3.fromRGB(255, 255, 255)
+		displayName.TextSize = 10
+		displayName.TextTransparency = 0.1
+		displayName.TextTruncate = Enum.TextTruncate.SplitWord
+		displayName.TextXAlignment = Enum.TextXAlignment.Left
+		displayName.TextYAlignment = Enum.TextYAlignment.Top
+		displayName.AutomaticSize = Enum.AutomaticSize.XY
+		displayName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		displayName.BackgroundTransparency = 1
+		displayName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		displayName.BorderSizePixel = 0
+		displayName.Parent = userAndDisplayFrame
+		displayName.Size = UDim2.fromScale(1,0)
+	else
+		displayName.Text = LocalPlayer.DisplayName
+		displayName.TextColor3 = Color3.fromRGB(255, 255, 255)
+		displayName.TextSize = 12
+		displayName.TextTransparency = 0.1
+		displayName.TextTruncate = Enum.TextTruncate.SplitWord
+		displayName.TextXAlignment = Enum.TextXAlignment.Left
+		displayName.TextYAlignment = Enum.TextYAlignment.Top
+		displayName.AutomaticSize = Enum.AutomaticSize.XY
+		displayName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		displayName.BackgroundTransparency = 1
+		displayName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		displayName.BorderSizePixel = 0
+		displayName.Parent = userAndDisplayFrame
+		displayName.Size = UDim2.fromScale(1,0)
+	end
 
 	local userAndDisplayFrameUIPadding = Instance.new("UIPadding")
 	userAndDisplayFrameUIPadding.Name = "UserAndDisplayFrameUIPadding"
@@ -699,21 +888,39 @@ function MacLib:Window(Settings)
 		Enum.FontWeight.SemiBold,
 		Enum.FontStyle.Normal
 	)
-	username.Text = "@" .. LocalPlayer.Name
-	username.TextColor3 = Color3.fromRGB(255, 255, 255)
-	username.TextSize = 12
-	username.TextTransparency = 0.7
-	username.TextTruncate = Enum.TextTruncate.SplitWord
-	username.TextXAlignment = Enum.TextXAlignment.Left
-	username.TextYAlignment = Enum.TextYAlignment.Top
-	username.AutomaticSize = Enum.AutomaticSize.XY
-	username.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	username.BackgroundTransparency = 1
-	username.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	username.BorderSizePixel = 0
-	username.LayoutOrder = 1
-	username.Parent = userAndDisplayFrame
-	username.Size = UDim2.fromScale(1,0)
+	if isMobile() then
+		username.Text = "@" .. LocalPlayer.Name
+		username.TextColor3 = Color3.fromRGB(255, 255, 255)
+		username.TextSize = 10
+		username.TextTransparency = 0.7
+		username.TextTruncate = Enum.TextTruncate.SplitWord
+		username.TextXAlignment = Enum.TextXAlignment.Left
+		username.TextYAlignment = Enum.TextYAlignment.Top
+		username.AutomaticSize = Enum.AutomaticSize.XY
+		username.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		username.BackgroundTransparency = 1
+		username.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		username.BorderSizePixel = 0
+		username.LayoutOrder = 1
+		username.Parent = userAndDisplayFrame
+		username.Size = UDim2.fromScale(1,0)
+	else
+		username.Text = "@" .. LocalPlayer.Name
+		username.TextColor3 = Color3.fromRGB(255, 255, 255)
+		username.TextSize = 12
+		username.TextTransparency = 0.7
+		username.TextTruncate = Enum.TextTruncate.SplitWord
+		username.TextXAlignment = Enum.TextXAlignment.Left
+		username.TextYAlignment = Enum.TextYAlignment.Top
+		username.AutomaticSize = Enum.AutomaticSize.XY
+		username.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		username.BackgroundTransparency = 1
+		username.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		username.BorderSizePixel = 0
+		username.LayoutOrder = 1
+		username.Parent = userAndDisplayFrame
+		username.Size = UDim2.fromScale(1,0)
+	end
 
 	userAndDisplayFrame.Parent = informationGroup
 
@@ -934,26 +1141,49 @@ function MacLib:Window(Settings)
 	end
 
 	local currentTab = Instance.new("TextLabel")
-	currentTab.Name = "CurrentTab"
-	currentTab.FontFace = Font.new(assets.interFont)
-	currentTab.RichText = true
-	currentTab.Text = ""
-	currentTab.RichText = true
-	currentTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-	currentTab.TextSize = 15
-	currentTab.TextTransparency = 0.5
-	currentTab.TextTruncate = Enum.TextTruncate.SplitWord
-	currentTab.TextXAlignment = Enum.TextXAlignment.Left
-	currentTab.TextYAlignment = Enum.TextYAlignment.Top
-	currentTab.AnchorPoint = Vector2.new(0, 0.5)
-	currentTab.AutomaticSize = Enum.AutomaticSize.Y
-	currentTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	currentTab.BackgroundTransparency = 1
-	currentTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	currentTab.BorderSizePixel = 0
-	currentTab.Position = UDim2.fromScale(0, 0.5)
-	currentTab.Size = UDim2.fromScale(0.9, 0)
-	currentTab.Parent = elements
+	if isMobile() then
+		currentTab.Name = "CurrentTab"
+		currentTab.FontFace = Font.new(assets.interFont)
+		currentTab.RichText = true
+		currentTab.Text = ""
+		currentTab.RichText = true
+		currentTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+		currentTab.TextSize = 13
+		currentTab.TextTransparency = 0.5
+		currentTab.TextTruncate = Enum.TextTruncate.SplitWord
+		currentTab.TextXAlignment = Enum.TextXAlignment.Left
+		currentTab.TextYAlignment = Enum.TextYAlignment.Top
+		currentTab.AnchorPoint = Vector2.new(0, 0.5)
+		currentTab.AutomaticSize = Enum.AutomaticSize.Y
+		currentTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		currentTab.BackgroundTransparency = 1
+		currentTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		currentTab.BorderSizePixel = 0
+		currentTab.Position = UDim2.fromScale(0, 0.5)
+		currentTab.Size = UDim2.fromScale(0.9, 0)
+		currentTab.Parent = elements
+	else
+		currentTab.Name = "CurrentTab"
+		currentTab.FontFace = Font.new(assets.interFont)
+		currentTab.RichText = true
+		currentTab.Text = ""
+		currentTab.RichText = true
+		currentTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+		currentTab.TextSize = 15
+		currentTab.TextTransparency = 0.5
+		currentTab.TextTruncate = Enum.TextTruncate.SplitWord
+		currentTab.TextXAlignment = Enum.TextXAlignment.Left
+		currentTab.TextYAlignment = Enum.TextYAlignment.Top
+		currentTab.AnchorPoint = Vector2.new(0, 0.5)
+		currentTab.AutomaticSize = Enum.AutomaticSize.Y
+		currentTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		currentTab.BackgroundTransparency = 1
+		currentTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		currentTab.BorderSizePixel = 0
+		currentTab.Position = UDim2.fromScale(0, 0.5)
+		currentTab.Size = UDim2.fromScale(0.9, 0)
+		currentTab.Parent = elements
+	end
 
 	elements.Parent = topbar
 
@@ -1311,16 +1541,29 @@ function MacLib:Window(Settings)
 		hasGlobalSetting = true
 		local GlobalSettingFunctions = {}
 		local globalSetting = Instance.new("TextButton")
-		globalSetting.Name = "GlobalSetting"
-		globalSetting.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-		globalSetting.Text = ""
-		globalSetting.TextColor3 = Color3.fromRGB(0, 0, 0)
-		globalSetting.TextSize = 12
-		globalSetting.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		globalSetting.BackgroundTransparency = 1
-		globalSetting.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		globalSetting.BorderSizePixel = 0
-		globalSetting.Size = UDim2.fromOffset(200, 30)
+		if isMobile() then
+			globalSetting.Name = "GlobalSetting"
+			globalSetting.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+			globalSetting.Text = ""
+			globalSetting.TextColor3 = Color3.fromRGB(0, 0, 0)
+			globalSetting.TextSize = 10
+			globalSetting.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			globalSetting.BackgroundTransparency = 1
+			globalSetting.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			globalSetting.BorderSizePixel = 0
+			globalSetting.Size = UDim2.fromOffset(200, 30)
+		else
+			globalSetting.Name = "GlobalSetting"
+			globalSetting.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+			globalSetting.Text = ""
+			globalSetting.TextColor3 = Color3.fromRGB(0, 0, 0)
+			globalSetting.TextSize = 12
+			globalSetting.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			globalSetting.BackgroundTransparency = 1
+			globalSetting.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			globalSetting.BorderSizePixel = 0
+			globalSetting.Size = UDim2.fromOffset(200, 30)
+		end
 
 		local globalSettingToggleUIPadding = Instance.new("UIPadding")
 		globalSettingToggleUIPadding.Name = "GlobalSettingToggleUIPadding"
@@ -1328,25 +1571,47 @@ function MacLib:Window(Settings)
 		globalSettingToggleUIPadding.Parent = globalSetting
 
 		local settingName = Instance.new("TextLabel")
-		settingName.Name = "SettingName"
-		settingName.FontFace = Font.new(assets.interFont)
-		settingName.Text = Settings.Name
-		settingName.RichText = true
-		settingName.TextColor3 = Color3.fromRGB(255, 255, 255)
-		settingName.TextSize = 12
-		settingName.TextTransparency = 0.5
-		settingName.TextTruncate = Enum.TextTruncate.SplitWord
-		settingName.TextXAlignment = Enum.TextXAlignment.Left
-		settingName.TextYAlignment = Enum.TextYAlignment.Top
-		settingName.AnchorPoint = Vector2.new(0, 0.5)
-		settingName.AutomaticSize = Enum.AutomaticSize.Y
-		settingName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		settingName.BackgroundTransparency = 1
-		settingName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		settingName.BorderSizePixel = 0
-		settingName.Position = UDim2.fromScale(1.3e-07, 0.5)
-		settingName.Size = UDim2.new(1,-40,0,0)
-		settingName.Parent = globalSetting
+		if isMobile() then
+			settingName.Name = "SettingName"
+			settingName.FontFace = Font.new(assets.interFont)
+			settingName.Text = Settings.Name
+			settingName.RichText = true
+			settingName.TextColor3 = Color3.fromRGB(255, 255, 255)
+			settingName.TextSize = 10
+			settingName.TextTransparency = 0.5
+			settingName.TextTruncate = Enum.TextTruncate.SplitWord
+			settingName.TextXAlignment = Enum.TextXAlignment.Left
+			settingName.TextYAlignment = Enum.TextYAlignment.Top
+			settingName.AnchorPoint = Vector2.new(0, 0.5)
+			settingName.AutomaticSize = Enum.AutomaticSize.Y
+			settingName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			settingName.BackgroundTransparency = 1
+			settingName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			settingName.BorderSizePixel = 0
+			settingName.Position = UDim2.fromScale(1.3e-07, 0.5)
+			settingName.Size = UDim2.new(1,-40,0,0)
+			settingName.Parent = globalSetting
+		else
+			settingName.Name = "SettingName"
+			settingName.FontFace = Font.new(assets.interFont)
+			settingName.Text = Settings.Name
+			settingName.RichText = true
+			settingName.TextColor3 = Color3.fromRGB(255, 255, 255)
+			settingName.TextSize = 12
+			settingName.TextTransparency = 0.5
+			settingName.TextTruncate = Enum.TextTruncate.SplitWord
+			settingName.TextXAlignment = Enum.TextXAlignment.Left
+			settingName.TextYAlignment = Enum.TextYAlignment.Top
+			settingName.AnchorPoint = Vector2.new(0, 0.5)
+			settingName.AutomaticSize = Enum.AutomaticSize.Y
+			settingName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			settingName.BackgroundTransparency = 1
+			settingName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			settingName.BorderSizePixel = 0
+			settingName.Position = UDim2.fromScale(1.3e-07, 0.5)
+			settingName.Size = UDim2.new(1,-40,0,0)
+			settingName.Parent = globalSetting
+		end
 
 		local globalSettingToggleUIListLayout = Instance.new("UIListLayout")
 		globalSettingToggleUIListLayout.Name = "GlobalSettingToggleUIListLayout"
@@ -1363,22 +1628,41 @@ function MacLib:Window(Settings)
 			Enum.FontWeight.Medium,
 			Enum.FontStyle.Normal
 		)
-		checkmark.Text = "✓"
-		checkmark.TextColor3 = Color3.fromRGB(255, 255, 255)
-		checkmark.TextSize = 12
-		checkmark.TextTransparency = 1
-		checkmark.TextXAlignment = Enum.TextXAlignment.Left
-		checkmark.TextYAlignment = Enum.TextYAlignment.Top
-		checkmark.AnchorPoint = Vector2.new(0, 0.5)
-		checkmark.AutomaticSize = Enum.AutomaticSize.Y
-		checkmark.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		checkmark.BackgroundTransparency = 1
-		checkmark.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		checkmark.BorderSizePixel = 0
-		checkmark.LayoutOrder = -1
-		checkmark.Position = UDim2.fromScale(1.3e-07, 0.5)
-		checkmark.Size = UDim2.fromOffset(-10, 0)
-		checkmark.Parent = globalSetting
+		if isMobile() then
+			checkmark.Text = "✓"
+			checkmark.TextColor3 = Color3.fromRGB(255, 255, 255)
+			checkmark.TextSize = 10
+			checkmark.TextTransparency = 1
+			checkmark.TextXAlignment = Enum.TextXAlignment.Left
+			checkmark.TextYAlignment = Enum.TextYAlignment.Top
+			checkmark.AnchorPoint = Vector2.new(0, 0.5)
+			checkmark.AutomaticSize = Enum.AutomaticSize.Y
+			checkmark.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			checkmark.BackgroundTransparency = 1
+			checkmark.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			checkmark.BorderSizePixel = 0
+			checkmark.LayoutOrder = -1
+			checkmark.Position = UDim2.fromScale(1.3e-07, 0.5)
+			checkmark.Size = UDim2.fromOffset(-10, 0)
+			checkmark.Parent = globalSetting
+		else
+			checkmark.Text = "✓"
+			checkmark.TextColor3 = Color3.fromRGB(255, 255, 255)
+			checkmark.TextSize = 12
+			checkmark.TextTransparency = 1
+			checkmark.TextXAlignment = Enum.TextXAlignment.Left
+			checkmark.TextYAlignment = Enum.TextYAlignment.Top
+			checkmark.AnchorPoint = Vector2.new(0, 0.5)
+			checkmark.AutomaticSize = Enum.AutomaticSize.Y
+			checkmark.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			checkmark.BackgroundTransparency = 1
+			checkmark.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			checkmark.BorderSizePixel = 0
+			checkmark.LayoutOrder = -1
+			checkmark.Position = UDim2.fromScale(1.3e-07, 0.5)
+			checkmark.Size = UDim2.fromOffset(-10, 0)
+			checkmark.Parent = globalSetting
+		end
 
 		globalSetting.Parent = globalSettings
 
@@ -1502,19 +1786,35 @@ function MacLib:Window(Settings)
 		function SectionFunctions:Tab(Settings)
 			local TabFunctions = {Settings = Settings}
 			local tabSwitcher = Instance.new("TextButton")
-			tabSwitcher.Name = "TabSwitcher"
-			tabSwitcher.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-			tabSwitcher.Text = ""
-			tabSwitcher.TextColor3 = Color3.fromRGB(0, 0, 0)
-			tabSwitcher.TextSize = 12
-			tabSwitcher.AutoButtonColor = false
-			tabSwitcher.AnchorPoint = Vector2.new(0.5, 0)
-			tabSwitcher.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			tabSwitcher.BackgroundTransparency = 1
-			tabSwitcher.BorderColor3 = Color3.fromRGB(0, 0, 0)
-			tabSwitcher.BorderSizePixel = 0
-			tabSwitcher.Position = UDim2.fromScale(0.5, 0)
-			tabSwitcher.Size = UDim2.new(1, -21, 0, 40)
+			if isMobile() then
+				tabSwitcher.Name = "TabSwitcher"
+				tabSwitcher.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+				tabSwitcher.Text = ""
+				tabSwitcher.TextColor3 = Color3.fromRGB(0, 0, 0)
+				tabSwitcher.TextSize = 10
+				tabSwitcher.AutoButtonColor = false
+				tabSwitcher.AnchorPoint = Vector2.new(0.5, 0)
+				tabSwitcher.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				tabSwitcher.BackgroundTransparency = 1
+				tabSwitcher.BorderColor3 = Color3.fromRGB(0, 0, 0)
+				tabSwitcher.BorderSizePixel = 0
+				tabSwitcher.Position = UDim2.fromScale(0.5, 0)
+				tabSwitcher.Size = UDim2.new(1, -21, 0, 40)
+			else
+				tabSwitcher.Name = "TabSwitcher"
+				tabSwitcher.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+				tabSwitcher.Text = ""
+				tabSwitcher.TextColor3 = Color3.fromRGB(0, 0, 0)
+				tabSwitcher.TextSize = 12
+				tabSwitcher.AutoButtonColor = false
+				tabSwitcher.AnchorPoint = Vector2.new(0.5, 0)
+				tabSwitcher.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				tabSwitcher.BackgroundTransparency = 1
+				tabSwitcher.BorderColor3 = Color3.fromRGB(0, 0, 0)
+				tabSwitcher.BorderSizePixel = 0
+				tabSwitcher.Position = UDim2.fromScale(0.5, 0)
+				tabSwitcher.Size = UDim2.new(1, -21, 0, 40)
+			end
 
 			tabIndex += 1
 			tabSwitcher.LayoutOrder = tabIndex
@@ -1560,22 +1860,41 @@ function MacLib:Window(Settings)
 				Enum.FontWeight.Medium,
 				Enum.FontStyle.Normal
 			)
-			tabSwitcherName.Text = Settings.Name
-			tabSwitcherName.RichText = true
-			tabSwitcherName.TextColor3 = Color3.fromRGB(255, 255, 255)
-			tabSwitcherName.TextSize = 14
-			tabSwitcherName.TextTransparency = 0.5
-			tabSwitcherName.TextTruncate = Enum.TextTruncate.SplitWord
-			tabSwitcherName.TextXAlignment = Enum.TextXAlignment.Left
-			tabSwitcherName.TextYAlignment = Enum.TextYAlignment.Top
-			tabSwitcherName.AutomaticSize = Enum.AutomaticSize.Y
-			tabSwitcherName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			tabSwitcherName.BackgroundTransparency = 1
-			tabSwitcherName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-			tabSwitcherName.BorderSizePixel = 0
-			tabSwitcherName.Size = UDim2.fromScale(1, 0)
-			tabSwitcherName.Parent = tabSwitcher
-			tabSwitcherName.LayoutOrder = 1
+			if isMobile() then
+				tabSwitcherName.Text = Settings.Name
+				tabSwitcherName.RichText = true
+				tabSwitcherName.TextColor3 = Color3.fromRGB(255, 255, 255)
+				tabSwitcherName.TextSize = 12
+				tabSwitcherName.TextTransparency = 0.5
+				tabSwitcherName.TextTruncate = Enum.TextTruncate.SplitWord
+				tabSwitcherName.TextXAlignment = Enum.TextXAlignment.Left
+				tabSwitcherName.TextYAlignment = Enum.TextYAlignment.Top
+				tabSwitcherName.AutomaticSize = Enum.AutomaticSize.Y
+				tabSwitcherName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				tabSwitcherName.BackgroundTransparency = 1
+				tabSwitcherName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+				tabSwitcherName.BorderSizePixel = 0
+				tabSwitcherName.Size = UDim2.fromScale(1, 0)
+				tabSwitcherName.Parent = tabSwitcher
+				tabSwitcherName.LayoutOrder = 1
+			else
+				tabSwitcherName.Text = Settings.Name
+				tabSwitcherName.RichText = true
+				tabSwitcherName.TextColor3 = Color3.fromRGB(255, 255, 255)
+				tabSwitcherName.TextSize = 14
+				tabSwitcherName.TextTransparency = 0.5
+				tabSwitcherName.TextTruncate = Enum.TextTruncate.SplitWord
+				tabSwitcherName.TextXAlignment = Enum.TextXAlignment.Left
+				tabSwitcherName.TextYAlignment = Enum.TextYAlignment.Top
+				tabSwitcherName.AutomaticSize = Enum.AutomaticSize.Y
+				tabSwitcherName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				tabSwitcherName.BackgroundTransparency = 1
+				tabSwitcherName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+				tabSwitcherName.BorderSizePixel = 0
+				tabSwitcherName.Size = UDim2.fromScale(1, 0)
+				tabSwitcherName.Parent = tabSwitcher
+				tabSwitcherName.LayoutOrder = 1
+			end
 
 			local tabSwitcherUIPadding = Instance.new("UIPadding")
 			tabSwitcherUIPadding.Name = "TabSwitcherUIPadding"
@@ -1724,21 +2043,39 @@ function MacLib:Window(Settings)
 					button.Parent = section
 
 					local buttonInteract = Instance.new("TextButton")
-					buttonInteract.Name = "ButtonInteract"
-					buttonInteract.FontFace = Font.new(assets.interFont)
-					buttonInteract.RichText = true
-					buttonInteract.TextColor3 = Color3.fromRGB(255, 255, 255)
-					buttonInteract.TextSize = 12
-					buttonInteract.TextTransparency = 0.5
-					buttonInteract.TextTruncate = Enum.TextTruncate.AtEnd
-					buttonInteract.TextXAlignment = Enum.TextXAlignment.Left
-					buttonInteract.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					buttonInteract.BackgroundTransparency = 1
-					buttonInteract.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					buttonInteract.BorderSizePixel = 0
-					buttonInteract.Size = UDim2.fromScale(1, 1)
-					buttonInteract.Parent = button
-					buttonInteract.Text = ButtonFunctions.Settings.Name
+					if isMobile() then
+						buttonInteract.Name = "ButtonInteract"
+						buttonInteract.FontFace = Font.new(assets.interFont)
+						buttonInteract.RichText = true
+						buttonInteract.TextColor3 = Color3.fromRGB(255, 255, 255)
+						buttonInteract.TextSize = 10
+						buttonInteract.TextTransparency = 0.5
+						buttonInteract.TextTruncate = Enum.TextTruncate.AtEnd
+						buttonInteract.TextXAlignment = Enum.TextXAlignment.Left
+						buttonInteract.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						buttonInteract.BackgroundTransparency = 1
+						buttonInteract.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						buttonInteract.BorderSizePixel = 0
+						buttonInteract.Size = UDim2.fromScale(1, 1)
+						buttonInteract.Parent = button
+						buttonInteract.Text = ButtonFunctions.Settings.Name
+					else
+						buttonInteract.Name = "ButtonInteract"
+						buttonInteract.FontFace = Font.new(assets.interFont)
+						buttonInteract.RichText = true
+						buttonInteract.TextColor3 = Color3.fromRGB(255, 255, 255)
+						buttonInteract.TextSize = 12
+						buttonInteract.TextTransparency = 0.5
+						buttonInteract.TextTruncate = Enum.TextTruncate.AtEnd
+						buttonInteract.TextXAlignment = Enum.TextXAlignment.Left
+						buttonInteract.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						buttonInteract.BackgroundTransparency = 1
+						buttonInteract.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						buttonInteract.BorderSizePixel = 0
+						buttonInteract.Size = UDim2.fromScale(1, 1)
+						buttonInteract.Parent = button
+						buttonInteract.Text = ButtonFunctions.Settings.Name
+					end
 
 					local buttonImage = Instance.new("ImageLabel")
 					buttonImage.Name = "ButtonImage"
@@ -1818,25 +2155,47 @@ function MacLib:Window(Settings)
 					toggle.Parent = section
 
 					local toggleName = Instance.new("TextLabel")
-					toggleName.Name = "ToggleName"
-					toggleName.FontFace = Font.new(assets.interFont)
-					toggleName.Text = ToggleFunctions.Settings.Name
-					toggleName.RichText = true
-					toggleName.TextColor3 = Color3.fromRGB(255, 255, 255)
-					toggleName.TextSize = 12
-					toggleName.TextTransparency = 0.5
-					toggleName.TextTruncate = Enum.TextTruncate.AtEnd
-					toggleName.TextXAlignment = Enum.TextXAlignment.Left
-					toggleName.TextYAlignment = Enum.TextYAlignment.Top
-					toggleName.AnchorPoint = Vector2.new(0, 0.5)
-					toggleName.AutomaticSize = Enum.AutomaticSize.Y
-					toggleName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					toggleName.BackgroundTransparency = 1
-					toggleName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					toggleName.BorderSizePixel = 0
-					toggleName.Position = UDim2.fromScale(0, 0.5)
-					toggleName.Size = UDim2.new(1, -50, 0, 0)
-					toggleName.Parent = toggle
+					if isMobile() then
+						toggleName.Name = "ToggleName"
+						toggleName.FontFace = Font.new(assets.interFont)
+						toggleName.Text = ToggleFunctions.Settings.Name
+						toggleName.RichText = true
+						toggleName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						toggleName.TextSize = 10
+						toggleName.TextTransparency = 0.5
+						toggleName.TextTruncate = Enum.TextTruncate.AtEnd
+						toggleName.TextXAlignment = Enum.TextXAlignment.Left
+						toggleName.TextYAlignment = Enum.TextYAlignment.Top
+						toggleName.AnchorPoint = Vector2.new(0, 0.5)
+						toggleName.AutomaticSize = Enum.AutomaticSize.Y
+						toggleName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						toggleName.BackgroundTransparency = 1
+						toggleName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						toggleName.BorderSizePixel = 0
+						toggleName.Position = UDim2.fromScale(0, 0.5)
+						toggleName.Size = UDim2.new(1, -50, 0, 0)
+						toggleName.Parent = toggle
+					else
+						toggleName.Name = "ToggleName"
+						toggleName.FontFace = Font.new(assets.interFont)
+						toggleName.Text = ToggleFunctions.Settings.Name
+						toggleName.RichText = true
+						toggleName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						toggleName.TextSize = 12
+						toggleName.TextTransparency = 0.5
+						toggleName.TextTruncate = Enum.TextTruncate.AtEnd
+						toggleName.TextXAlignment = Enum.TextXAlignment.Left
+						toggleName.TextYAlignment = Enum.TextYAlignment.Top
+						toggleName.AnchorPoint = Vector2.new(0, 0.5)
+						toggleName.AutomaticSize = Enum.AutomaticSize.Y
+						toggleName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						toggleName.BackgroundTransparency = 1
+						toggleName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						toggleName.BorderSizePixel = 0
+						toggleName.Position = UDim2.fromScale(0, 0.5)
+						toggleName.Size = UDim2.new(1, -50, 0, 0)
+						toggleName.Parent = toggle
+					end
 
 					local toggle1 = Instance.new("ImageButton")
 					toggle1.Name = "Toggle"
@@ -1957,24 +2316,45 @@ function MacLib:Window(Settings)
 					slider.Parent = section
 
 					local sliderName = Instance.new("TextLabel")
-					sliderName.Name = "SliderName"
-					sliderName.FontFace = Font.new(assets.interFont)
-					sliderName.Text = SliderFunctions.Settings.Name
-					sliderName.RichText = true
-					sliderName.TextColor3 = Color3.fromRGB(255, 255, 255)
-					sliderName.TextSize = 12
-					sliderName.TextTransparency = 0.5
-					sliderName.TextTruncate = Enum.TextTruncate.AtEnd
-					sliderName.TextXAlignment = Enum.TextXAlignment.Left
-					sliderName.TextYAlignment = Enum.TextYAlignment.Top
-					sliderName.AnchorPoint = Vector2.new(0, 0.5)
-					sliderName.AutomaticSize = Enum.AutomaticSize.XY
-					sliderName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					sliderName.BackgroundTransparency = 1
-					sliderName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					sliderName.BorderSizePixel = 0
-					sliderName.Position = UDim2.fromScale(1.3e-07, 0.5)
-					sliderName.Parent = slider
+					if isMobile() then
+						sliderName.Name = "SliderName"
+						sliderName.FontFace = Font.new(assets.interFont)
+						sliderName.Text = SliderFunctions.Settings.Name
+						sliderName.RichText = true
+						sliderName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						sliderName.TextSize = 10
+						sliderName.TextTransparency = 0.5
+						sliderName.TextTruncate = Enum.TextTruncate.AtEnd
+						sliderName.TextXAlignment = Enum.TextXAlignment.Left
+						sliderName.TextYAlignment = Enum.TextYAlignment.Top
+						sliderName.AnchorPoint = Vector2.new(0, 0.5)
+						sliderName.AutomaticSize = Enum.AutomaticSize.XY
+						sliderName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						sliderName.BackgroundTransparency = 1
+						sliderName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						sliderName.BorderSizePixel = 0
+						sliderName.Position = UDim2.fromScale(1.3e-07, 0.5)
+						sliderName.Parent = slider
+					else
+						sliderName.Name = "SliderName"
+						sliderName.FontFace = Font.new(assets.interFont)
+						sliderName.Text = SliderFunctions.Settings.Name
+						sliderName.RichText = true
+						sliderName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						sliderName.TextSize = 12
+						sliderName.TextTransparency = 0.5
+						sliderName.TextTruncate = Enum.TextTruncate.AtEnd
+						sliderName.TextXAlignment = Enum.TextXAlignment.Left
+						sliderName.TextYAlignment = Enum.TextYAlignment.Top
+						sliderName.AnchorPoint = Vector2.new(0, 0.5)
+						sliderName.AutomaticSize = Enum.AutomaticSize.XY
+						sliderName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						sliderName.BackgroundTransparency = 1
+						sliderName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						sliderName.BorderSizePixel = 0
+						sliderName.Position = UDim2.fromScale(1.3e-07, 0.5)
+						sliderName.Parent = slider
+					end
 
 					local sliderElements = Instance.new("Frame")
 					sliderElements.Name = "SliderElements"
@@ -1987,20 +2367,37 @@ function MacLib:Window(Settings)
 					sliderElements.Size = UDim2.fromScale(1, 1)
 
 					local sliderValue = Instance.new("TextBox")
-					sliderValue.Name = "SliderValue"
-					sliderValue.FontFace = Font.new(assets.interFont)
-					sliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-					sliderValue.TextSize = 12
-					sliderValue.TextTransparency = 0.1
-					--sliderValue.TextTruncate = Enum.TextTruncate.AtEnd
-					sliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					sliderValue.BackgroundTransparency = 0.95
-					sliderValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					sliderValue.BorderSizePixel = 0
-					sliderValue.LayoutOrder = 1
-					sliderValue.Position = UDim2.fromScale(-0.0789, 0.171)
-					sliderValue.Size = UDim2.fromOffset(41, 21)
-					sliderValue.ClipsDescendants = true
+					if isMobile() then
+						sliderValue.Name = "SliderValue"
+						sliderValue.FontFace = Font.new(assets.interFont)
+						sliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+						sliderValue.TextSize = 10
+						sliderValue.TextTransparency = 0.1
+						--sliderValue.TextTruncate = Enum.TextTruncate.AtEnd
+						sliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						sliderValue.BackgroundTransparency = 0.95
+						sliderValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						sliderValue.BorderSizePixel = 0
+						sliderValue.LayoutOrder = 1
+						sliderValue.Position = UDim2.fromScale(-0.0789, 0.171)
+						sliderValue.Size = UDim2.fromOffset(41, 21)
+						sliderValue.ClipsDescendants = true
+					else
+						sliderValue.Name = "SliderValue"
+						sliderValue.FontFace = Font.new(assets.interFont)
+						sliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+						sliderValue.TextSize = 12
+						sliderValue.TextTransparency = 0.1
+						--sliderValue.TextTruncate = Enum.TextTruncate.AtEnd
+						sliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						sliderValue.BackgroundTransparency = 0.95
+						sliderValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						sliderValue.BorderSizePixel = 0
+						sliderValue.LayoutOrder = 1
+						sliderValue.Position = UDim2.fromScale(-0.0789, 0.171)
+						sliderValue.Size = UDim2.fromOffset(41, 21)
+						sliderValue.ClipsDescendants = true
+					end
 
 					local sliderValueUICorner = Instance.new("UICorner")
 					sliderValueUICorner.Name = "SliderValueUICorner"
@@ -2218,43 +2615,84 @@ function MacLib:Window(Settings)
 					input.Parent = section
 
 					local inputName = Instance.new("TextLabel")
-					inputName.Name = "InputName"
-					inputName.FontFace = Font.new(assets.interFont)
-					inputName.Text = InputFunctions.Settings.Name
-					inputName.RichText = true
-					inputName.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputName.TextSize = 12
-					inputName.TextTransparency = 0.5
-					inputName.TextTruncate = Enum.TextTruncate.AtEnd
-					inputName.TextXAlignment = Enum.TextXAlignment.Left
-					inputName.TextYAlignment = Enum.TextYAlignment.Top
-					inputName.AnchorPoint = Vector2.new(0, 0.5)
-					inputName.AutomaticSize = Enum.AutomaticSize.XY
-					inputName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					inputName.BackgroundTransparency = 1
-					inputName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					inputName.BorderSizePixel = 0
-					inputName.Position = UDim2.fromScale(0, 0.5)
-					inputName.Parent = input
+					if isMobile() then
+						inputName.Name = "InputName"
+						inputName.FontFace = Font.new(assets.interFont)
+						inputName.Text = InputFunctions.Settings.Name
+						inputName.RichText = true
+						inputName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputName.TextSize = 10
+						inputName.TextTransparency = 0.5
+						inputName.TextTruncate = Enum.TextTruncate.AtEnd
+						inputName.TextXAlignment = Enum.TextXAlignment.Left
+						inputName.TextYAlignment = Enum.TextYAlignment.Top
+						inputName.AnchorPoint = Vector2.new(0, 0.5)
+						inputName.AutomaticSize = Enum.AutomaticSize.XY
+						inputName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputName.BackgroundTransparency = 1
+						inputName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputName.BorderSizePixel = 0
+						inputName.Position = UDim2.fromScale(0, 0.5)
+						inputName.Parent = input
+					else
+						inputName.Name = "InputName"
+						inputName.FontFace = Font.new(assets.interFont)
+						inputName.Text = InputFunctions.Settings.Name
+						inputName.RichText = true
+						inputName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputName.TextSize = 12
+						inputName.TextTransparency = 0.5
+						inputName.TextTruncate = Enum.TextTruncate.AtEnd
+						inputName.TextXAlignment = Enum.TextXAlignment.Left
+						inputName.TextYAlignment = Enum.TextYAlignment.Top
+						inputName.AnchorPoint = Vector2.new(0, 0.5)
+						inputName.AutomaticSize = Enum.AutomaticSize.XY
+						inputName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputName.BackgroundTransparency = 1
+						inputName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputName.BorderSizePixel = 0
+						inputName.Position = UDim2.fromScale(0, 0.5)
+						inputName.Parent = input
+					end
 
 					local inputBox = Instance.new("TextBox")
-					inputBox.Name = "InputBox"
-					inputBox.FontFace = Font.new(assets.interFont)
-					inputBox.Text = "Hello world!"
-					inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputBox.TextSize = 12
-					inputBox.TextTransparency = 0.1
-					inputBox.AnchorPoint = Vector2.new(1, 0.5)
-					inputBox.AutomaticSize = Enum.AutomaticSize.X
-					inputBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					inputBox.BackgroundTransparency = 0.95
-					inputBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					inputBox.BorderSizePixel = 0
-					inputBox.ClipsDescendants = true
-					inputBox.LayoutOrder = 1
-					inputBox.Position = UDim2.fromScale(1, 0.5)
-					inputBox.Size = UDim2.fromOffset(21, 21)
-					inputBox.TextXAlignment = Enum.TextXAlignment.Right
+					if isMobile() then
+						inputBox.Name = "InputBox"
+						inputBox.FontFace = Font.new(assets.interFont)
+						inputBox.Text = "Hello world!"
+						inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox.TextSize = 10
+						inputBox.TextTransparency = 0.1
+						inputBox.AnchorPoint = Vector2.new(1, 0.5)
+						inputBox.AutomaticSize = Enum.AutomaticSize.X
+						inputBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox.BackgroundTransparency = 0.95
+						inputBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputBox.BorderSizePixel = 0
+						inputBox.ClipsDescendants = true
+						inputBox.LayoutOrder = 1
+						inputBox.Position = UDim2.fromScale(1, 0.5)
+						inputBox.Size = UDim2.fromOffset(21, 21)
+						inputBox.TextXAlignment = Enum.TextXAlignment.Right
+					else
+						inputBox.Name = "InputBox"
+						inputBox.FontFace = Font.new(assets.interFont)
+						inputBox.Text = "Hello world!"
+						inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox.TextSize = 12
+						inputBox.TextTransparency = 0.1
+						inputBox.AnchorPoint = Vector2.new(1, 0.5)
+						inputBox.AutomaticSize = Enum.AutomaticSize.X
+						inputBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox.BackgroundTransparency = 0.95
+						inputBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputBox.BorderSizePixel = 0
+						inputBox.ClipsDescendants = true
+						inputBox.LayoutOrder = 1
+						inputBox.Position = UDim2.fromScale(1, 0.5)
+						inputBox.Size = UDim2.fromOffset(21, 21)
+						inputBox.TextXAlignment = Enum.TextXAlignment.Right
+					end
 
 					local inputBoxUICorner = Instance.new("UICorner")
 					inputBoxUICorner.Name = "InputBoxUICorner"
@@ -2394,44 +2832,86 @@ function MacLib:Window(Settings)
 					keybind.Parent = section
 
 					local keybindName = Instance.new("TextLabel")
-					keybindName.Name = "KeybindName"
-					keybindName.FontFace = Font.new(assets.interFont)
-					keybindName.Text = KeybindFunctions.Settings.Name
-					keybindName.RichText = true
-					keybindName.TextColor3 = Color3.fromRGB(255, 255, 255)
-					keybindName.TextSize = 12
-					keybindName.TextTransparency = 0.5
-					keybindName.TextTruncate = Enum.TextTruncate.AtEnd
-					keybindName.TextXAlignment = Enum.TextXAlignment.Left
-					keybindName.TextYAlignment = Enum.TextYAlignment.Top
-					keybindName.AnchorPoint = Vector2.new(0, 0.5)
-					keybindName.AutomaticSize = Enum.AutomaticSize.XY
-					keybindName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					keybindName.BackgroundTransparency = 1
-					keybindName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					keybindName.BorderSizePixel = 0
-					keybindName.Position = UDim2.fromScale(0, 0.5)
-					keybindName.Parent = keybind
+					if isMobile() then
+						keybindName.Name = "KeybindName"
+						keybindName.FontFace = Font.new(assets.interFont)
+						keybindName.Text = KeybindFunctions.Settings.Name
+						keybindName.RichText = true
+						keybindName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						keybindName.TextSize = 10
+						keybindName.TextTransparency = 0.5
+						keybindName.TextTruncate = Enum.TextTruncate.AtEnd
+						keybindName.TextXAlignment = Enum.TextXAlignment.Left
+						keybindName.TextYAlignment = Enum.TextYAlignment.Top
+						keybindName.AnchorPoint = Vector2.new(0, 0.5)
+						keybindName.AutomaticSize = Enum.AutomaticSize.XY
+						keybindName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						keybindName.BackgroundTransparency = 1
+						keybindName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						keybindName.BorderSizePixel = 0
+						keybindName.Position = UDim2.fromScale(0, 0.5)
+						keybindName.Parent = keybind
+					else
+						keybindName.Name = "KeybindName"
+						keybindName.FontFace = Font.new(assets.interFont)
+						keybindName.Text = KeybindFunctions.Settings.Name
+						keybindName.RichText = true
+						keybindName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						keybindName.TextSize = 12
+						keybindName.TextTransparency = 0.5
+						keybindName.TextTruncate = Enum.TextTruncate.AtEnd
+						keybindName.TextXAlignment = Enum.TextXAlignment.Left
+						keybindName.TextYAlignment = Enum.TextYAlignment.Top
+						keybindName.AnchorPoint = Vector2.new(0, 0.5)
+						keybindName.AutomaticSize = Enum.AutomaticSize.XY
+						keybindName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						keybindName.BackgroundTransparency = 1
+						keybindName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						keybindName.BorderSizePixel = 0
+						keybindName.Position = UDim2.fromScale(0, 0.5)
+						keybindName.Parent = keybind
+					end
 
 					local binderBox = Instance.new("TextBox")
-					binderBox.Name = "BinderBox"
-					binderBox.CursorPosition = -1
-					binderBox.FontFace = Font.new(assets.interFont)
-					binderBox.PlaceholderText = "..."
-					binderBox.Text = ""
-					binderBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-					binderBox.TextSize = 12
-					binderBox.TextTransparency = 0.1
-					binderBox.AnchorPoint = Vector2.new(1, 0.5)
-					binderBox.AutomaticSize = Enum.AutomaticSize.X
-					binderBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					binderBox.BackgroundTransparency = 0.95
-					binderBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					binderBox.BorderSizePixel = 0
-					binderBox.ClipsDescendants = true
-					binderBox.LayoutOrder = 1
-					binderBox.Position = UDim2.fromScale(1, 0.5)
-					binderBox.Size = UDim2.fromOffset(21, 21)
+					if isMobile() then
+						binderBox.Name = "BinderBox"
+						binderBox.CursorPosition = -1
+						binderBox.FontFace = Font.new(assets.interFont)
+						binderBox.PlaceholderText = "..."
+						binderBox.Text = ""
+						binderBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+						binderBox.TextSize = 10
+						binderBox.TextTransparency = 0.1
+						binderBox.AnchorPoint = Vector2.new(1, 0.5)
+						binderBox.AutomaticSize = Enum.AutomaticSize.X
+						binderBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						binderBox.BackgroundTransparency = 0.95
+						binderBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						binderBox.BorderSizePixel = 0
+						binderBox.ClipsDescendants = true
+						binderBox.LayoutOrder = 1
+						binderBox.Position = UDim2.fromScale(1, 0.5)
+						binderBox.Size = UDim2.fromOffset(21, 21)
+					else
+						binderBox.Name = "BinderBox"
+						binderBox.CursorPosition = -1
+						binderBox.FontFace = Font.new(assets.interFont)
+						binderBox.PlaceholderText = "..."
+						binderBox.Text = ""
+						binderBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+						binderBox.TextSize = 12
+						binderBox.TextTransparency = 0.1
+						binderBox.AnchorPoint = Vector2.new(1, 0.5)
+						binderBox.AutomaticSize = Enum.AutomaticSize.X
+						binderBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						binderBox.BackgroundTransparency = 0.95
+						binderBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						binderBox.BorderSizePixel = 0
+						binderBox.ClipsDescendants = true
+						binderBox.LayoutOrder = 1
+						binderBox.Position = UDim2.fromScale(1, 0.5)
+						binderBox.Size = UDim2.fromOffset(21, 21)
+					end
 
 					local binderBoxUICorner = Instance.new("UICorner")
 					binderBoxUICorner.Name = "BinderBoxUICorner"
@@ -2583,35 +3063,68 @@ function MacLib:Window(Settings)
 					dropdownUIPadding.Parent = dropdown
 
 					local interact = Instance.new("TextButton")
-					interact.Name = "Interact"
-					interact.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-					interact.Text = ""
-					interact.TextColor3 = Color3.fromRGB(0, 0, 0)
-					interact.TextSize = 12
-					interact.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					interact.BackgroundTransparency = 1
-					interact.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					interact.BorderSizePixel = 0
-					interact.Size = UDim2.new(1, 0, 0, 38)
-					interact.Parent = dropdown
+					if isMobile() then
+						interact.Name = "Interact"
+						interact.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+						interact.Text = ""
+						interact.TextColor3 = Color3.fromRGB(0, 0, 0)
+						interact.TextSize = 10
+						interact.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						interact.BackgroundTransparency = 1
+						interact.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						interact.BorderSizePixel = 0
+						interact.Size = UDim2.new(1, 0, 0, 38)
+						interact.Parent = dropdown
+					else
+						interact.Name = "Interact"
+						interact.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+						interact.Text = ""
+						interact.TextColor3 = Color3.fromRGB(0, 0, 0)
+						interact.TextSize = 12
+						interact.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						interact.BackgroundTransparency = 1
+						interact.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						interact.BorderSizePixel = 0
+						interact.Size = UDim2.new(1, 0, 0, 38)
+						interact.Parent = dropdown
+					end
 
 					local dropdownName = Instance.new("TextLabel")
-					dropdownName.Name = "DropdownName"
-					dropdownName.FontFace = Font.new(assets.interFont)
-					dropdownName.Text = Settings.Default and (DropdownFunctions.Settings.Name .. " • " .. table.concat(Selected, ", ")) or (DropdownFunctions.Settings.Name .. "...")
-					dropdownName.RichText = true
-					dropdownName.TextColor3 = Color3.fromRGB(255, 255, 255)
-					dropdownName.TextSize = 12
-					dropdownName.TextTransparency = 0.5
-					dropdownName.TextTruncate = Enum.TextTruncate.SplitWord
-					dropdownName.TextXAlignment = Enum.TextXAlignment.Left
-					dropdownName.AutomaticSize = Enum.AutomaticSize.Y
-					dropdownName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					dropdownName.BackgroundTransparency = 1
-					dropdownName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					dropdownName.BorderSizePixel = 0
-					dropdownName.Size = UDim2.new(1, -20, 0, 38)
-					dropdownName.Parent = dropdown
+					if isMobile() then
+						dropdownName.Name = "DropdownName"
+						dropdownName.FontFace = Font.new(assets.interFont)
+						dropdownName.Text = Settings.Default and (DropdownFunctions.Settings.Name .. " • " .. table.concat(Selected, ", ")) or (DropdownFunctions.Settings.Name .. "...")
+						dropdownName.RichText = true
+						dropdownName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						dropdownName.TextSize = 10
+						dropdownName.TextTransparency = 0.5
+						dropdownName.TextTruncate = Enum.TextTruncate.SplitWord
+						dropdownName.TextXAlignment = Enum.TextXAlignment.Left
+						dropdownName.AutomaticSize = Enum.AutomaticSize.Y
+						dropdownName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						dropdownName.BackgroundTransparency = 1
+						dropdownName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						dropdownName.BorderSizePixel = 0
+						dropdownName.Size = UDim2.new(1, -20, 0, 38)
+						dropdownName.Parent = dropdown
+					else
+						dropdownName.Name = "DropdownName"
+						dropdownName.FontFace = Font.new(assets.interFont)
+						dropdownName.Text = Settings.Default and (DropdownFunctions.Settings.Name .. " • " .. table.concat(Selected, ", ")) or (DropdownFunctions.Settings.Name .. "...")
+						dropdownName.RichText = true
+						dropdownName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						dropdownName.TextSize = 12
+						dropdownName.TextTransparency = 0.5
+						dropdownName.TextTruncate = Enum.TextTruncate.SplitWord
+						dropdownName.TextXAlignment = Enum.TextXAlignment.Left
+						dropdownName.AutomaticSize = Enum.AutomaticSize.Y
+						dropdownName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						dropdownName.BackgroundTransparency = 1
+						dropdownName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						dropdownName.BorderSizePixel = 0
+						dropdownName.Size = UDim2.new(1, -20, 0, 38)
+						dropdownName.Parent = dropdown
+					end
 
 					local dropdownUIStroke = Instance.new("UIStroke")
 					dropdownUIStroke.Name = "DropdownUIStroke"
@@ -2702,17 +3215,31 @@ function MacLib:Window(Settings)
 						Enum.FontWeight.Medium,
 						Enum.FontStyle.Normal
 					)
-					searchBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-					searchBox.PlaceholderText = "Search..."
-					searchBox.Text = ""
-					searchBox.TextColor3 = Color3.fromRGB(200, 200, 200)
-					searchBox.TextSize = 12
-					searchBox.TextXAlignment = Enum.TextXAlignment.Left
-					searchBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					searchBox.BackgroundTransparency = 1
-					searchBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					searchBox.BorderSizePixel = 0
-					searchBox.Size = UDim2.fromScale(1, 1)
+					if isMobile() then
+						searchBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+						searchBox.PlaceholderText = "Search..."
+						searchBox.Text = ""
+						searchBox.TextColor3 = Color3.fromRGB(200, 200, 200)
+						searchBox.TextSize = 10
+						searchBox.TextXAlignment = Enum.TextXAlignment.Left
+						searchBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						searchBox.BackgroundTransparency = 1
+						searchBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						searchBox.BorderSizePixel = 0
+						searchBox.Size = UDim2.fromScale(1, 1)
+					else
+						searchBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+						searchBox.PlaceholderText = "Search..."
+						searchBox.Text = ""
+						searchBox.TextColor3 = Color3.fromRGB(200, 200, 200)
+						searchBox.TextSize = 12
+						searchBox.TextXAlignment = Enum.TextXAlignment.Left
+						searchBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						searchBox.BackgroundTransparency = 1
+						searchBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						searchBox.BorderSizePixel = 0
+						searchBox.Size = UDim2.fromScale(1, 1)
+					end
 
 					local function CalculateDropdownSize()
 						local totalHeight = 0
@@ -2869,16 +3396,29 @@ function MacLib:Window(Settings)
 
 					local function addOption(i, v)
 						local option = Instance.new("TextButton")
-						option.Name = "Option"
-						option.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-						option.Text = ""
-						option.TextColor3 = Color3.fromRGB(0, 0, 0)
-						option.TextSize = 12
-						option.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-						option.BackgroundTransparency = 1
-						option.BorderColor3 = Color3.fromRGB(0, 0, 0)
-						option.BorderSizePixel = 0
-						option.Size = UDim2.new(1, 0, 0, 30)
+						if isMobile() then
+							option.Name = "Option"
+							option.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+							option.Text = ""
+							option.TextColor3 = Color3.fromRGB(0, 0, 0)
+							option.TextSize = 10
+							option.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+							option.BackgroundTransparency = 1
+							option.BorderColor3 = Color3.fromRGB(0, 0, 0)
+							option.BorderSizePixel = 0
+							option.Size = UDim2.new(1, 0, 0, 30)
+						else
+							option.Name = "Option"
+							option.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+							option.Text = ""
+							option.TextColor3 = Color3.fromRGB(0, 0, 0)
+							option.TextSize = 12
+							option.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+							option.BackgroundTransparency = 1
+							option.BorderColor3 = Color3.fromRGB(0, 0, 0)
+							option.BorderSizePixel = 0
+							option.Size = UDim2.new(1, 0, 0, 30)
+						end
 
 						local optionUIPadding = Instance.new("UIPadding")
 						optionUIPadding.Name = "OptionUIPadding"
@@ -2886,24 +3426,45 @@ function MacLib:Window(Settings)
 						optionUIPadding.Parent = option
 
 						local optionName = Instance.new("TextLabel")
-						optionName.Name = "OptionName"
-						optionName.FontFace = Font.new(assets.interFont)
-						optionName.Text = v
-						optionName.RichText = true
-						optionName.TextColor3 = Color3.fromRGB(255, 255, 255)
-						optionName.TextSize = 12
-						optionName.TextTransparency = 0.5
-						optionName.TextTruncate = Enum.TextTruncate.AtEnd
-						optionName.TextXAlignment = Enum.TextXAlignment.Left
-						optionName.TextYAlignment = Enum.TextYAlignment.Top
-						optionName.AnchorPoint = Vector2.new(0, 0.5)
-						optionName.AutomaticSize = Enum.AutomaticSize.XY
-						optionName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-						optionName.BackgroundTransparency = 1
-						optionName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-						optionName.BorderSizePixel = 0
-						optionName.Position = UDim2.fromScale(1.3e-07, 0.5)
-						optionName.Parent = option
+						if isMobile() then
+							optionName.Name = "OptionName"
+							optionName.FontFace = Font.new(assets.interFont)
+							optionName.Text = v
+							optionName.RichText = true
+							optionName.TextColor3 = Color3.fromRGB(255, 255, 255)
+							optionName.TextSize = 10
+							optionName.TextTransparency = 0.5
+							optionName.TextTruncate = Enum.TextTruncate.AtEnd
+							optionName.TextXAlignment = Enum.TextXAlignment.Left
+							optionName.TextYAlignment = Enum.TextYAlignment.Top
+							optionName.AnchorPoint = Vector2.new(0, 0.5)
+							optionName.AutomaticSize = Enum.AutomaticSize.XY
+							optionName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+							optionName.BackgroundTransparency = 1
+							optionName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+							optionName.BorderSizePixel = 0
+							optionName.Position = UDim2.fromScale(1.3e-07, 0.5)
+							optionName.Parent = option
+						else
+							optionName.Name = "OptionName"
+							optionName.FontFace = Font.new(assets.interFont)
+							optionName.Text = v
+							optionName.RichText = true
+							optionName.TextColor3 = Color3.fromRGB(255, 255, 255)
+							optionName.TextSize = 12
+							optionName.TextTransparency = 0.5
+							optionName.TextTruncate = Enum.TextTruncate.AtEnd
+							optionName.TextXAlignment = Enum.TextXAlignment.Left
+							optionName.TextYAlignment = Enum.TextYAlignment.Top
+							optionName.AnchorPoint = Vector2.new(0, 0.5)
+							optionName.AutomaticSize = Enum.AutomaticSize.XY
+							optionName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+							optionName.BackgroundTransparency = 1
+							optionName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+							optionName.BorderSizePixel = 0
+							optionName.Position = UDim2.fromScale(1.3e-07, 0.5)
+							optionName.Parent = option
+						end
 
 						local optionUIListLayout = Instance.new("UIListLayout")
 						optionUIListLayout.Name = "OptionUIListLayout"
@@ -2914,24 +3475,45 @@ function MacLib:Window(Settings)
 						optionUIListLayout.Parent = option
 
 						local checkmark = Instance.new("TextLabel")
-						checkmark.Name = "Checkmark"
-						checkmark.FontFace = Font.new(assets.interFont)
-						checkmark.Text = "✓"
-						checkmark.TextColor3 = Color3.fromRGB(255, 255, 255)
-						checkmark.TextSize = 12
-						checkmark.TextTransparency = 1
-						checkmark.TextXAlignment = Enum.TextXAlignment.Left
-						checkmark.TextYAlignment = Enum.TextYAlignment.Top
-						checkmark.AnchorPoint = Vector2.new(0, 0.5)
-						checkmark.AutomaticSize = Enum.AutomaticSize.Y
-						checkmark.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-						checkmark.BackgroundTransparency = 1
-						checkmark.BorderColor3 = Color3.fromRGB(0, 0, 0)
-						checkmark.BorderSizePixel = 0
-						checkmark.LayoutOrder = -1
-						checkmark.Position = UDim2.fromScale(1.3e-07, 0.5)
-						checkmark.Size = UDim2.fromOffset(-10, 0)
-						checkmark.Parent = option
+						if isMobile() then
+							checkmark.Name = "Checkmark"
+							checkmark.FontFace = Font.new(assets.interFont)
+							checkmark.Text = "✓"
+							checkmark.TextColor3 = Color3.fromRGB(255, 255, 255)
+							checkmark.TextSize = 10
+							checkmark.TextTransparency = 1
+							checkmark.TextXAlignment = Enum.TextXAlignment.Left
+							checkmark.TextYAlignment = Enum.TextYAlignment.Top
+							checkmark.AnchorPoint = Vector2.new(0, 0.5)
+							checkmark.AutomaticSize = Enum.AutomaticSize.Y
+							checkmark.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+							checkmark.BackgroundTransparency = 1
+							checkmark.BorderColor3 = Color3.fromRGB(0, 0, 0)
+							checkmark.BorderSizePixel = 0
+							checkmark.LayoutOrder = -1
+							checkmark.Position = UDim2.fromScale(1.3e-07, 0.5)
+							checkmark.Size = UDim2.fromOffset(-10, 0)
+							checkmark.Parent = option
+						else
+							checkmark.Name = "Checkmark"
+							checkmark.FontFace = Font.new(assets.interFont)
+							checkmark.Text = "✓"
+							checkmark.TextColor3 = Color3.fromRGB(255, 255, 255)
+							checkmark.TextSize = 12
+							checkmark.TextTransparency = 1
+							checkmark.TextXAlignment = Enum.TextXAlignment.Left
+							checkmark.TextYAlignment = Enum.TextYAlignment.Top
+							checkmark.AnchorPoint = Vector2.new(0, 0.5)
+							checkmark.AutomaticSize = Enum.AutomaticSize.Y
+							checkmark.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+							checkmark.BackgroundTransparency = 1
+							checkmark.BorderColor3 = Color3.fromRGB(0, 0, 0)
+							checkmark.BorderSizePixel = 0
+							checkmark.LayoutOrder = -1
+							checkmark.Position = UDim2.fromScale(1.3e-07, 0.5)
+							checkmark.Size = UDim2.fromOffset(-10, 0)
+							checkmark.Parent = option
+						end
 
 						option.Parent = dropdownFrame
 
@@ -3151,24 +3733,45 @@ function MacLib:Window(Settings)
 					colorpicker.Parent = section
 
 					local colorpickerName = Instance.new("TextLabel")
-					colorpickerName.Name = "KeybindName"
-					colorpickerName.FontFace = Font.new(assets.interFont)
-					colorpickerName.Text = Settings.Name
-					colorpickerName.TextColor3 = Color3.fromRGB(255, 255, 255)
-					colorpickerName.TextSize = 12
-					colorpickerName.TextTransparency = 0.5
-					colorpickerName.RichText = true
-					colorpickerName.TextTruncate = Enum.TextTruncate.AtEnd
-					colorpickerName.TextXAlignment = Enum.TextXAlignment.Left
-					colorpickerName.TextYAlignment = Enum.TextYAlignment.Top
-					colorpickerName.AnchorPoint = Vector2.new(0, 0.5)
-					colorpickerName.AutomaticSize = Enum.AutomaticSize.XY
-					colorpickerName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					colorpickerName.BackgroundTransparency = 1
-					colorpickerName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					colorpickerName.BorderSizePixel = 0
-					colorpickerName.Position = UDim2.fromScale(0, 0.5)
-					colorpickerName.Parent = colorpicker
+					if isMobile() then
+						colorpickerName.Name = "KeybindName"
+						colorpickerName.FontFace = Font.new(assets.interFont)
+						colorpickerName.Text = Settings.Name
+						colorpickerName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						colorpickerName.TextSize = 10
+						colorpickerName.TextTransparency = 0.5
+						colorpickerName.RichText = true
+						colorpickerName.TextTruncate = Enum.TextTruncate.AtEnd
+						colorpickerName.TextXAlignment = Enum.TextXAlignment.Left
+						colorpickerName.TextYAlignment = Enum.TextYAlignment.Top
+						colorpickerName.AnchorPoint = Vector2.new(0, 0.5)
+						colorpickerName.AutomaticSize = Enum.AutomaticSize.XY
+						colorpickerName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						colorpickerName.BackgroundTransparency = 1
+						colorpickerName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						colorpickerName.BorderSizePixel = 0
+						colorpickerName.Position = UDim2.fromScale(0, 0.5)
+						colorpickerName.Parent = colorpicker
+					else
+						colorpickerName.Name = "KeybindName"
+						colorpickerName.FontFace = Font.new(assets.interFont)
+						colorpickerName.Text = Settings.Name
+						colorpickerName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						colorpickerName.TextSize = 12
+						colorpickerName.TextTransparency = 0.5
+						colorpickerName.RichText = true
+						colorpickerName.TextTruncate = Enum.TextTruncate.AtEnd
+						colorpickerName.TextXAlignment = Enum.TextXAlignment.Left
+						colorpickerName.TextYAlignment = Enum.TextYAlignment.Top
+						colorpickerName.AnchorPoint = Vector2.new(0, 0.5)
+						colorpickerName.AutomaticSize = Enum.AutomaticSize.XY
+						colorpickerName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						colorpickerName.BackgroundTransparency = 1
+						colorpickerName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						colorpickerName.BorderSizePixel = 0
+						colorpickerName.Position = UDim2.fromScale(0, 0.5)
+						colorpickerName.Parent = colorpicker
+					end
 
 					local colorCbg = Instance.new("ImageLabel")
 					colorCbg.Name = "NewColor"
@@ -3198,17 +3801,31 @@ function MacLib:Window(Settings)
 					uICorner.Parent = colorC
 
 					local interact = Instance.new("TextButton")
-					interact.Name = "Interact"
-					interact.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-					interact.Text = ""
-					interact.TextColor3 = Color3.fromRGB(0, 0, 0)
-					interact.TextSize = 12
-					interact.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					interact.BackgroundTransparency = 1
-					interact.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					interact.BorderSizePixel = 0
-					interact.Size = UDim2.fromScale(1, 1)
-					interact.Parent = colorC
+					if isMobile() then
+						interact.Name = "Interact"
+						interact.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+						interact.Text = ""
+						interact.TextColor3 = Color3.fromRGB(0, 0, 0)
+						interact.TextSize = 10
+						interact.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						interact.BackgroundTransparency = 1
+						interact.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						interact.BorderSizePixel = 0
+						interact.Size = UDim2.fromScale(1, 1)
+						interact.Parent = colorC
+					else
+						interact.Name = "Interact"
+						interact.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+						interact.Text = ""
+						interact.TextColor3 = Color3.fromRGB(0, 0, 0)
+						interact.TextSize = 12
+						interact.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						interact.BackgroundTransparency = 1
+						interact.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						interact.BorderSizePixel = 0
+						interact.Size = UDim2.fromScale(1, 1)
+						interact.Parent = colorC
+					end
 
 					colorC.Parent = colorCbg
 
@@ -3278,18 +3895,33 @@ function MacLib:Window(Settings)
 					colorOptions.Size = UDim2.fromScale(1, 0)
 
 					local value = Instance.new("TextButton")
-					value.Name = "Value"
-					value.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-					value.Text = ""
-					value.TextColor3 = Color3.fromRGB(0, 0, 0)
-					value.TextSize = 12
-					value.AutoButtonColor = false
-					value.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					value.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					value.BorderSizePixel = 0
-					value.LayoutOrder = 1
-					value.Position = UDim2.fromScale(0.092, 0.886)
-					value.Size = UDim2.new(1, 0, 0, 15)
+					if isMobile() then
+						value.Name = "Value"
+						value.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+						value.Text = ""
+						value.TextColor3 = Color3.fromRGB(0, 0, 0)
+						value.TextSize = 10
+						value.AutoButtonColor = false
+						value.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						value.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						value.BorderSizePixel = 0
+						value.LayoutOrder = 1
+						value.Position = UDim2.fromScale(0.092, 0.886)
+						value.Size = UDim2.new(1, 0, 0, 15)
+					else
+						value.Name = "Value"
+						value.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+						value.Text = ""
+						value.TextColor3 = Color3.fromRGB(0, 0, 0)
+						value.TextSize = 12
+						value.AutoButtonColor = false
+						value.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						value.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						value.BorderSizePixel = 0
+						value.LayoutOrder = 1
+						value.Position = UDim2.fromScale(0.092, 0.886)
+						value.Size = UDim2.new(1, 0, 0, 15)
+					end
 
 					local uIGradient = Instance.new("UIGradient")
 					uIGradient.Name = "UIGradient"
@@ -3415,24 +4047,45 @@ function MacLib:Window(Settings)
 					red.Size = UDim2.fromOffset(0, 38)
 
 					local inputName = Instance.new("TextLabel")
-					inputName.Name = "InputName"
-					inputName.FontFace = Font.new(assets.interFont)
-					inputName.Text = "Red"
-					inputName.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputName.TextSize = 12
-					inputName.TextTransparency = 0.5
-					inputName.TextTruncate = Enum.TextTruncate.AtEnd
-					inputName.TextXAlignment = Enum.TextXAlignment.Left
-					inputName.TextYAlignment = Enum.TextYAlignment.Top
-					inputName.AnchorPoint = Vector2.new(0, 0.5)
-					inputName.AutomaticSize = Enum.AutomaticSize.XY
-					inputName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					inputName.BackgroundTransparency = 1
-					inputName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					inputName.BorderSizePixel = 0
-					inputName.LayoutOrder = 2
-					inputName.Position = UDim2.fromScale(0, 0.5)
-					inputName.Parent = red
+					if isMobile() then
+						inputName.Name = "InputName"
+						inputName.FontFace = Font.new(assets.interFont)
+						inputName.Text = "Red"
+						inputName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputName.TextSize = 10
+						inputName.TextTransparency = 0.5
+						inputName.TextTruncate = Enum.TextTruncate.AtEnd
+						inputName.TextXAlignment = Enum.TextXAlignment.Left
+						inputName.TextYAlignment = Enum.TextYAlignment.Top
+						inputName.AnchorPoint = Vector2.new(0, 0.5)
+						inputName.AutomaticSize = Enum.AutomaticSize.XY
+						inputName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputName.BackgroundTransparency = 1
+						inputName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputName.BorderSizePixel = 0
+						inputName.LayoutOrder = 2
+						inputName.Position = UDim2.fromScale(0, 0.5)
+						inputName.Parent = red
+					else
+						inputName.Name = "InputName"
+						inputName.FontFace = Font.new(assets.interFont)
+						inputName.Text = "Red"
+						inputName.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputName.TextSize = 12
+						inputName.TextTransparency = 0.5
+						inputName.TextTruncate = Enum.TextTruncate.AtEnd
+						inputName.TextXAlignment = Enum.TextXAlignment.Left
+						inputName.TextYAlignment = Enum.TextYAlignment.Top
+						inputName.AnchorPoint = Vector2.new(0, 0.5)
+						inputName.AutomaticSize = Enum.AutomaticSize.XY
+						inputName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputName.BackgroundTransparency = 1
+						inputName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputName.BorderSizePixel = 0
+						inputName.LayoutOrder = 2
+						inputName.Position = UDim2.fromScale(0, 0.5)
+						inputName.Parent = red
+					end
 
 					local uIListLayout3 = Instance.new("UIListLayout")
 					uIListLayout3.Name = "UIListLayout"
@@ -3443,24 +4096,45 @@ function MacLib:Window(Settings)
 					uIListLayout3.Parent = red
 
 					local inputBox = Instance.new("TextBox")
-					inputBox.Name = "InputBox"
-					inputBox.ClearTextOnFocus = false
-					inputBox.CursorPosition = -1
-					inputBox.FontFace = Font.new(assets.interFont)
-					inputBox.Text = "255"
-					inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputBox.TextSize = 12
-					inputBox.TextTransparency = 0.1
-					inputBox.TextXAlignment = Enum.TextXAlignment.Left
-					inputBox.AnchorPoint = Vector2.new(1, 0.5)
-					inputBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					inputBox.BackgroundTransparency = 0.95
-					inputBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					inputBox.BorderSizePixel = 0
-					inputBox.ClipsDescendants = true
-					inputBox.LayoutOrder = 1
-					inputBox.Position = UDim2.fromScale(1, 0.5)
-					inputBox.Size = UDim2.fromOffset(75, 25)
+					if isMobile() then
+						inputBox.Name = "InputBox"
+						inputBox.ClearTextOnFocus = false
+						inputBox.CursorPosition = -1
+						inputBox.FontFace = Font.new(assets.interFont)
+						inputBox.Text = "255"
+						inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox.TextSize = 10
+						inputBox.TextTransparency = 0.1
+						inputBox.TextXAlignment = Enum.TextXAlignment.Left
+						inputBox.AnchorPoint = Vector2.new(1, 0.5)
+						inputBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox.BackgroundTransparency = 0.95
+						inputBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputBox.BorderSizePixel = 0
+						inputBox.ClipsDescendants = true
+						inputBox.LayoutOrder = 1
+						inputBox.Position = UDim2.fromScale(1, 0.5)
+						inputBox.Size = UDim2.fromOffset(75, 25)
+					else
+						inputBox.Name = "InputBox"
+						inputBox.ClearTextOnFocus = false
+						inputBox.CursorPosition = -1
+						inputBox.FontFace = Font.new(assets.interFont)
+						inputBox.Text = "255"
+						inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox.TextSize = 12
+						inputBox.TextTransparency = 0.1
+						inputBox.TextXAlignment = Enum.TextXAlignment.Left
+						inputBox.AnchorPoint = Vector2.new(1, 0.5)
+						inputBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox.BackgroundTransparency = 0.95
+						inputBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputBox.BorderSizePixel = 0
+						inputBox.ClipsDescendants = true
+						inputBox.LayoutOrder = 1
+						inputBox.Position = UDim2.fromScale(1, 0.5)
+						inputBox.Size = UDim2.fromOffset(75, 25)
+					end
 
 					local inputBoxUICorner = Instance.new("UICorner")
 					inputBoxUICorner.Name = "InputBoxUICorner"
@@ -3499,24 +4173,45 @@ function MacLib:Window(Settings)
 					green.Size = UDim2.fromOffset(0, 38)
 
 					local inputName1 = Instance.new("TextLabel")
-					inputName1.Name = "InputName"
-					inputName1.FontFace = Font.new(assets.interFont)
-					inputName1.Text = "Green"
-					inputName1.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputName1.TextSize = 12
-					inputName1.TextTransparency = 0.5
-					inputName1.TextTruncate = Enum.TextTruncate.AtEnd
-					inputName1.TextXAlignment = Enum.TextXAlignment.Left
-					inputName1.TextYAlignment = Enum.TextYAlignment.Top
-					inputName1.AnchorPoint = Vector2.new(0, 0.5)
-					inputName1.AutomaticSize = Enum.AutomaticSize.XY
-					inputName1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					inputName1.BackgroundTransparency = 1
-					inputName1.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					inputName1.BorderSizePixel = 0
-					inputName1.LayoutOrder = 2
-					inputName1.Position = UDim2.fromScale(0, 0.5)
-					inputName1.Parent = green
+					if isMobile() then
+						inputName1.Name = "InputName"
+						inputName1.FontFace = Font.new(assets.interFont)
+						inputName1.Text = "Green"
+						inputName1.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputName1.TextSize = 10
+						inputName1.TextTransparency = 0.5
+						inputName1.TextTruncate = Enum.TextTruncate.AtEnd
+						inputName1.TextXAlignment = Enum.TextXAlignment.Left
+						inputName1.TextYAlignment = Enum.TextYAlignment.Top
+						inputName1.AnchorPoint = Vector2.new(0, 0.5)
+						inputName1.AutomaticSize = Enum.AutomaticSize.XY
+						inputName1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputName1.BackgroundTransparency = 1
+						inputName1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputName1.BorderSizePixel = 0
+						inputName1.LayoutOrder = 2
+						inputName1.Position = UDim2.fromScale(0, 0.5)
+						inputName1.Parent = green
+					else
+						inputName1.Name = "InputName"
+						inputName1.FontFace = Font.new(assets.interFont)
+						inputName1.Text = "Green"
+						inputName1.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputName1.TextSize = 12
+						inputName1.TextTransparency = 0.5
+						inputName1.TextTruncate = Enum.TextTruncate.AtEnd
+						inputName1.TextXAlignment = Enum.TextXAlignment.Left
+						inputName1.TextYAlignment = Enum.TextYAlignment.Top
+						inputName1.AnchorPoint = Vector2.new(0, 0.5)
+						inputName1.AutomaticSize = Enum.AutomaticSize.XY
+						inputName1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputName1.BackgroundTransparency = 1
+						inputName1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputName1.BorderSizePixel = 0
+						inputName1.LayoutOrder = 2
+						inputName1.Position = UDim2.fromScale(0, 0.5)
+						inputName1.Parent = green
+					end
 
 					local uIListLayout4 = Instance.new("UIListLayout")
 					uIListLayout4.Name = "UIListLayout"
@@ -3527,23 +4222,43 @@ function MacLib:Window(Settings)
 					uIListLayout4.Parent = green
 
 					local inputBox1 = Instance.new("TextBox")
-					inputBox1.Name = "InputBox"
-					inputBox1.ClearTextOnFocus = false
-					inputBox1.FontFace = Font.new(assets.interFont)
-					inputBox1.Text = "255"
-					inputBox1.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputBox1.TextSize = 12
-					inputBox1.TextTransparency = 0.1
-					inputBox1.TextXAlignment = Enum.TextXAlignment.Left
-					inputBox1.AnchorPoint = Vector2.new(1, 0.5)
-					inputBox1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					inputBox1.BackgroundTransparency = 0.95
-					inputBox1.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					inputBox1.BorderSizePixel = 0
-					inputBox1.ClipsDescendants = true
-					inputBox1.LayoutOrder = 1
-					inputBox1.Position = UDim2.fromScale(1, 0.5)
-					inputBox1.Size = UDim2.fromOffset(75, 25)
+					if isMobile() then
+						inputBox1.Name = "InputBox"
+						inputBox1.ClearTextOnFocus = false
+						inputBox1.FontFace = Font.new(assets.interFont)
+						inputBox1.Text = "255"
+						inputBox1.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox1.TextSize = 10
+						inputBox1.TextTransparency = 0.1
+						inputBox1.TextXAlignment = Enum.TextXAlignment.Left
+						inputBox1.AnchorPoint = Vector2.new(1, 0.5)
+						inputBox1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox1.BackgroundTransparency = 0.95
+						inputBox1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputBox1.BorderSizePixel = 0
+						inputBox1.ClipsDescendants = true
+						inputBox1.LayoutOrder = 1
+						inputBox1.Position = UDim2.fromScale(1, 0.5)
+						inputBox1.Size = UDim2.fromOffset(75, 25)
+					else
+						inputBox1.Name = "InputBox"
+						inputBox1.ClearTextOnFocus = false
+						inputBox1.FontFace = Font.new(assets.interFont)
+						inputBox1.Text = "255"
+						inputBox1.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox1.TextSize = 12
+						inputBox1.TextTransparency = 0.1
+						inputBox1.TextXAlignment = Enum.TextXAlignment.Left
+						inputBox1.AnchorPoint = Vector2.new(1, 0.5)
+						inputBox1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox1.BackgroundTransparency = 0.95
+						inputBox1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputBox1.BorderSizePixel = 0
+						inputBox1.ClipsDescendants = true
+						inputBox1.LayoutOrder = 1
+						inputBox1.Position = UDim2.fromScale(1, 0.5)
+						inputBox1.Size = UDim2.fromOffset(75, 25)
+					end
 
 					local inputBoxUICorner1 = Instance.new("UICorner")
 					inputBoxUICorner1.Name = "InputBoxUICorner"
@@ -3582,24 +4297,45 @@ function MacLib:Window(Settings)
 					blue.Size = UDim2.fromOffset(0, 38)
 
 					local inputName2 = Instance.new("TextLabel")
-					inputName2.Name = "InputName"
-					inputName2.FontFace = Font.new(assets.interFont)
-					inputName2.Text = "Blue"
-					inputName2.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputName2.TextSize = 12
-					inputName2.TextTransparency = 0.5
-					inputName2.TextTruncate = Enum.TextTruncate.AtEnd
-					inputName2.TextXAlignment = Enum.TextXAlignment.Left
-					inputName2.TextYAlignment = Enum.TextYAlignment.Top
-					inputName2.AnchorPoint = Vector2.new(0, 0.5)
-					inputName2.AutomaticSize = Enum.AutomaticSize.XY
-					inputName2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					inputName2.BackgroundTransparency = 1
-					inputName2.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					inputName2.BorderSizePixel = 0
-					inputName2.LayoutOrder = 2
-					inputName2.Position = UDim2.fromScale(0, 0.5)
-					inputName2.Parent = blue
+					if isMobile() then
+						inputName2.Name = "InputName"
+						inputName2.FontFace = Font.new(assets.interFont)
+						inputName2.Text = "Blue"
+						inputName2.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputName2.TextSize = 10
+						inputName2.TextTransparency = 0.5
+						inputName2.TextTruncate = Enum.TextTruncate.AtEnd
+						inputName2.TextXAlignment = Enum.TextXAlignment.Left
+						inputName2.TextYAlignment = Enum.TextYAlignment.Top
+						inputName2.AnchorPoint = Vector2.new(0, 0.5)
+						inputName2.AutomaticSize = Enum.AutomaticSize.XY
+						inputName2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputName2.BackgroundTransparency = 1
+						inputName2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputName2.BorderSizePixel = 0
+						inputName2.LayoutOrder = 2
+						inputName2.Position = UDim2.fromScale(0, 0.5)
+						inputName2.Parent = blue
+					else
+						inputName2.Name = "InputName"
+						inputName2.FontFace = Font.new(assets.interFont)
+						inputName2.Text = "Blue"
+						inputName2.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputName2.TextSize = 12
+						inputName2.TextTransparency = 0.5
+						inputName2.TextTruncate = Enum.TextTruncate.AtEnd
+						inputName2.TextXAlignment = Enum.TextXAlignment.Left
+						inputName2.TextYAlignment = Enum.TextYAlignment.Top
+						inputName2.AnchorPoint = Vector2.new(0, 0.5)
+						inputName2.AutomaticSize = Enum.AutomaticSize.XY
+						inputName2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputName2.BackgroundTransparency = 1
+						inputName2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputName2.BorderSizePixel = 0
+						inputName2.LayoutOrder = 2
+						inputName2.Position = UDim2.fromScale(0, 0.5)
+						inputName2.Parent = blue
+					end
 
 					local uIListLayout5 = Instance.new("UIListLayout")
 					uIListLayout5.Name = "UIListLayout"
@@ -3610,23 +4346,43 @@ function MacLib:Window(Settings)
 					uIListLayout5.Parent = blue
 
 					local inputBox2 = Instance.new("TextBox")
-					inputBox2.Name = "InputBox"
-					inputBox2.ClearTextOnFocus = false
-					inputBox2.FontFace = Font.new(assets.interFont)
-					inputBox2.Text = "255"
-					inputBox2.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputBox2.TextSize = 12
-					inputBox2.TextTransparency = 0.1
-					inputBox2.TextXAlignment = Enum.TextXAlignment.Left
-					inputBox2.AnchorPoint = Vector2.new(1, 0.5)
-					inputBox2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					inputBox2.BackgroundTransparency = 0.95
-					inputBox2.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					inputBox2.BorderSizePixel = 0
-					inputBox2.ClipsDescendants = true
-					inputBox2.LayoutOrder = 1
-					inputBox2.Position = UDim2.fromScale(1, 0.5)
-					inputBox2.Size = UDim2.fromOffset(75, 25)
+					if isMobile() then
+						inputBox2.Name = "InputBox"
+						inputBox2.ClearTextOnFocus = false
+						inputBox2.FontFace = Font.new(assets.interFont)
+						inputBox2.Text = "255"
+						inputBox2.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox2.TextSize = 10
+						inputBox2.TextTransparency = 0.1
+						inputBox2.TextXAlignment = Enum.TextXAlignment.Left
+						inputBox2.AnchorPoint = Vector2.new(1, 0.5)
+						inputBox2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox2.BackgroundTransparency = 0.95
+						inputBox2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputBox2.BorderSizePixel = 0
+						inputBox2.ClipsDescendants = true
+						inputBox2.LayoutOrder = 1
+						inputBox2.Position = UDim2.fromScale(1, 0.5)
+						inputBox2.Size = UDim2.fromOffset(75, 25)
+					else
+						inputBox2.Name = "InputBox"
+						inputBox2.ClearTextOnFocus = false
+						inputBox2.FontFace = Font.new(assets.interFont)
+						inputBox2.Text = "255"
+						inputBox2.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox2.TextSize = 12
+						inputBox2.TextTransparency = 0.1
+						inputBox2.TextXAlignment = Enum.TextXAlignment.Left
+						inputBox2.AnchorPoint = Vector2.new(1, 0.5)
+						inputBox2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox2.BackgroundTransparency = 0.95
+						inputBox2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputBox2.BorderSizePixel = 0
+						inputBox2.ClipsDescendants = true
+						inputBox2.LayoutOrder = 1
+						inputBox2.Position = UDim2.fromScale(1, 0.5)
+						inputBox2.Size = UDim2.fromOffset(75, 25)
+					end
 
 					local inputBoxUICorner2 = Instance.new("UICorner")
 					inputBoxUICorner2.Name = "InputBoxUICorner"
@@ -3666,24 +4422,45 @@ function MacLib:Window(Settings)
 					alpha.Visible = isAlpha
 
 					local inputName3 = Instance.new("TextLabel")
-					inputName3.Name = "InputName"
-					inputName3.FontFace = Font.new(assets.interFont)
-					inputName3.Text = "Alpha"
-					inputName3.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputName3.TextSize = 12
-					inputName3.TextTransparency = 0.5
-					inputName3.TextTruncate = Enum.TextTruncate.AtEnd
-					inputName3.TextXAlignment = Enum.TextXAlignment.Left
-					inputName3.TextYAlignment = Enum.TextYAlignment.Top
-					inputName3.AnchorPoint = Vector2.new(0, 0.5)
-					inputName3.AutomaticSize = Enum.AutomaticSize.XY
-					inputName3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					inputName3.BackgroundTransparency = 1
-					inputName3.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					inputName3.BorderSizePixel = 0
-					inputName3.LayoutOrder = 2
-					inputName3.Position = UDim2.fromScale(0, 0.5)
-					inputName3.Parent = alpha
+					if isMobile() then
+						inputName3.Name = "InputName"
+						inputName3.FontFace = Font.new(assets.interFont)
+						inputName3.Text = "Alpha"
+						inputName3.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputName3.TextSize = 10
+						inputName3.TextTransparency = 0.5
+						inputName3.TextTruncate = Enum.TextTruncate.AtEnd
+						inputName3.TextXAlignment = Enum.TextXAlignment.Left
+						inputName3.TextYAlignment = Enum.TextYAlignment.Top
+						inputName3.AnchorPoint = Vector2.new(0, 0.5)
+						inputName3.AutomaticSize = Enum.AutomaticSize.XY
+						inputName3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputName3.BackgroundTransparency = 1
+						inputName3.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputName3.BorderSizePixel = 0
+						inputName3.LayoutOrder = 2
+						inputName3.Position = UDim2.fromScale(0, 0.5)
+						inputName3.Parent = alpha
+					else
+						inputName3.Name = "InputName"
+						inputName3.FontFace = Font.new(assets.interFont)
+						inputName3.Text = "Alpha"
+						inputName3.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputName3.TextSize = 12
+						inputName3.TextTransparency = 0.5
+						inputName3.TextTruncate = Enum.TextTruncate.AtEnd
+						inputName3.TextXAlignment = Enum.TextXAlignment.Left
+						inputName3.TextYAlignment = Enum.TextYAlignment.Top
+						inputName3.AnchorPoint = Vector2.new(0, 0.5)
+						inputName3.AutomaticSize = Enum.AutomaticSize.XY
+						inputName3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputName3.BackgroundTransparency = 1
+						inputName3.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputName3.BorderSizePixel = 0
+						inputName3.LayoutOrder = 2
+						inputName3.Position = UDim2.fromScale(0, 0.5)
+						inputName3.Parent = alpha
+					end
 
 					local uIListLayout6 = Instance.new("UIListLayout")
 					uIListLayout6.Name = "UIListLayout"
@@ -3694,23 +4471,43 @@ function MacLib:Window(Settings)
 					uIListLayout6.Parent = alpha
 
 					local inputBox3 = Instance.new("TextBox")
-					inputBox3.Name = "InputBox"
-					inputBox3.ClearTextOnFocus = false
-					inputBox3.FontFace = Font.new(assets.interFont)
-					inputBox3.Text = "0"
-					inputBox3.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputBox3.TextSize = 12
-					inputBox3.TextTransparency = 0.1
-					inputBox3.TextXAlignment = Enum.TextXAlignment.Left
-					inputBox3.AnchorPoint = Vector2.new(1, 0.5)
-					inputBox3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					inputBox3.BackgroundTransparency = 0.95
-					inputBox3.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					inputBox3.BorderSizePixel = 0
-					inputBox3.ClipsDescendants = true
-					inputBox3.LayoutOrder = 1
-					inputBox3.Position = UDim2.fromScale(1, 0.5)
-					inputBox3.Size = UDim2.fromOffset(75, 25)
+					if isMobile() then
+						inputBox3.Name = "InputBox"
+						inputBox3.ClearTextOnFocus = false
+						inputBox3.FontFace = Font.new(assets.interFont)
+						inputBox3.Text = "0"
+						inputBox3.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox3.TextSize = 10
+						inputBox3.TextTransparency = 0.1
+						inputBox3.TextXAlignment = Enum.TextXAlignment.Left
+						inputBox3.AnchorPoint = Vector2.new(1, 0.5)
+						inputBox3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox3.BackgroundTransparency = 0.95
+						inputBox3.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputBox3.BorderSizePixel = 0
+						inputBox3.ClipsDescendants = true
+						inputBox3.LayoutOrder = 1
+						inputBox3.Position = UDim2.fromScale(1, 0.5)
+						inputBox3.Size = UDim2.fromOffset(75, 25)
+					else
+						inputBox3.Name = "InputBox"
+						inputBox3.ClearTextOnFocus = false
+						inputBox3.FontFace = Font.new(assets.interFont)
+						inputBox3.Text = "0"
+						inputBox3.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox3.TextSize = 12
+						inputBox3.TextTransparency = 0.1
+						inputBox3.TextXAlignment = Enum.TextXAlignment.Left
+						inputBox3.AnchorPoint = Vector2.new(1, 0.5)
+						inputBox3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox3.BackgroundTransparency = 0.95
+						inputBox3.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputBox3.BorderSizePixel = 0
+						inputBox3.ClipsDescendants = true
+						inputBox3.LayoutOrder = 1
+						inputBox3.Position = UDim2.fromScale(1, 0.5)
+						inputBox3.Size = UDim2.fromOffset(75, 25)
+					end
 
 					local inputBoxUICorner3 = Instance.new("UICorner")
 					inputBoxUICorner3.Name = "InputBoxUICorner"
@@ -3748,24 +4545,45 @@ function MacLib:Window(Settings)
 					hex.Size = UDim2.fromOffset(0, 38)
 
 					local inputName4 = Instance.new("TextLabel")
-					inputName4.Name = "InputName"
-					inputName4.FontFace = Font.new(assets.interFont)
-					inputName4.Text = "Hex"
-					inputName4.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputName4.TextSize = 12
-					inputName4.TextTransparency = 0.5
-					inputName4.TextTruncate = Enum.TextTruncate.AtEnd
-					inputName4.TextXAlignment = Enum.TextXAlignment.Left
-					inputName4.TextYAlignment = Enum.TextYAlignment.Top
-					inputName4.AnchorPoint = Vector2.new(0, 0.5)
-					inputName4.AutomaticSize = Enum.AutomaticSize.XY
-					inputName4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					inputName4.BackgroundTransparency = 1
-					inputName4.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					inputName4.BorderSizePixel = 0
-					inputName4.LayoutOrder = 2
-					inputName4.Position = UDim2.fromScale(0, 0.5)
-					inputName4.Parent = hex
+					if isMobile() then
+						inputName4.Name = "InputName"
+						inputName4.FontFace = Font.new(assets.interFont)
+						inputName4.Text = "Hex"
+						inputName4.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputName4.TextSize = 10
+						inputName4.TextTransparency = 0.5
+						inputName4.TextTruncate = Enum.TextTruncate.AtEnd
+						inputName4.TextXAlignment = Enum.TextXAlignment.Left
+						inputName4.TextYAlignment = Enum.TextYAlignment.Top
+						inputName4.AnchorPoint = Vector2.new(0, 0.5)
+						inputName4.AutomaticSize = Enum.AutomaticSize.XY
+						inputName4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputName4.BackgroundTransparency = 1
+						inputName4.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputName4.BorderSizePixel = 0
+						inputName4.LayoutOrder = 2
+						inputName4.Position = UDim2.fromScale(0, 0.5)
+						inputName4.Parent = hex
+					else
+						inputName4.Name = "InputName"
+						inputName4.FontFace = Font.new(assets.interFont)
+						inputName4.Text = "Hex"
+						inputName4.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputName4.TextSize = 12
+						inputName4.TextTransparency = 0.5
+						inputName4.TextTruncate = Enum.TextTruncate.AtEnd
+						inputName4.TextXAlignment = Enum.TextXAlignment.Left
+						inputName4.TextYAlignment = Enum.TextYAlignment.Top
+						inputName4.AnchorPoint = Vector2.new(0, 0.5)
+						inputName4.AutomaticSize = Enum.AutomaticSize.XY
+						inputName4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputName4.BackgroundTransparency = 1
+						inputName4.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputName4.BorderSizePixel = 0
+						inputName4.LayoutOrder = 2
+						inputName4.Position = UDim2.fromScale(0, 0.5)
+						inputName4.Parent = hex
+					end
 
 					local uIListLayout7 = Instance.new("UIListLayout")
 					uIListLayout7.Name = "UIListLayout"
@@ -3776,24 +4594,45 @@ function MacLib:Window(Settings)
 					uIListLayout7.Parent = hex
 
 					local inputBox4 = Instance.new("TextBox")
-					inputBox4.Name = "InputBox"
-					inputBox4.ClearTextOnFocus = false
-					inputBox4.CursorPosition = -1
-					inputBox4.FontFace = Font.new(assets.interFont)
-					inputBox4.Text = "255"
-					inputBox4.TextColor3 = Color3.fromRGB(255, 255, 255)
-					inputBox4.TextSize = 12
-					inputBox4.TextTransparency = 0.1
-					inputBox4.TextXAlignment = Enum.TextXAlignment.Left
-					inputBox4.AnchorPoint = Vector2.new(1, 0.5)
-					inputBox4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					inputBox4.BackgroundTransparency = 0.95
-					inputBox4.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					inputBox4.BorderSizePixel = 0
-					inputBox4.ClipsDescendants = true
-					inputBox4.LayoutOrder = 1
-					inputBox4.Position = UDim2.fromScale(1, 0.5)
-					inputBox4.Size = UDim2.fromOffset(75, 25)
+					if isMobile() then
+						inputBox4.Name = "InputBox"
+						inputBox4.ClearTextOnFocus = false
+						inputBox4.CursorPosition = -1
+						inputBox4.FontFace = Font.new(assets.interFont)
+						inputBox4.Text = "255"
+						inputBox4.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox4.TextSize = 10
+						inputBox4.TextTransparency = 0.1
+						inputBox4.TextXAlignment = Enum.TextXAlignment.Left
+						inputBox4.AnchorPoint = Vector2.new(1, 0.5)
+						inputBox4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox4.BackgroundTransparency = 0.95
+						inputBox4.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputBox4.BorderSizePixel = 0
+						inputBox4.ClipsDescendants = true
+						inputBox4.LayoutOrder = 1
+						inputBox4.Position = UDim2.fromScale(1, 0.5)
+						inputBox4.Size = UDim2.fromOffset(75, 25)
+					else
+						inputBox4.Name = "InputBox"
+						inputBox4.ClearTextOnFocus = false
+						inputBox4.CursorPosition = -1
+						inputBox4.FontFace = Font.new(assets.interFont)
+						inputBox4.Text = "255"
+						inputBox4.TextColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox4.TextSize = 12
+						inputBox4.TextTransparency = 0.1
+						inputBox4.TextXAlignment = Enum.TextXAlignment.Left
+						inputBox4.AnchorPoint = Vector2.new(1, 0.5)
+						inputBox4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						inputBox4.BackgroundTransparency = 0.95
+						inputBox4.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						inputBox4.BorderSizePixel = 0
+						inputBox4.ClipsDescendants = true
+						inputBox4.LayoutOrder = 1
+						inputBox4.Position = UDim2.fromScale(1, 0.5)
+						inputBox4.Size = UDim2.fromOffset(75, 25)
+					end
 
 					local inputBoxUICorner4 = Instance.new("UICorner")
 					inputBoxUICorner4.Name = "InputBoxUICorner"
@@ -3937,17 +4776,31 @@ function MacLib:Window(Settings)
 						Enum.FontWeight.Medium,
 						Enum.FontStyle.Normal
 					)
-					confirm.Text = "Confirm"
-					confirm.TextColor3 = Color3.fromRGB(255, 255, 255)
-					confirm.TextSize = 12
-					confirm.TextTransparency = 0.5
-					confirm.TextTruncate = Enum.TextTruncate.AtEnd
-					confirm.AutoButtonColor = false
-					confirm.AutomaticSize = Enum.AutomaticSize.Y
-					confirm.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-					confirm.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					confirm.BorderSizePixel = 0
-					confirm.Size = UDim2.fromScale(1, 0)
+					if isMobile() then
+						confirm.Text = "Confirm"
+						confirm.TextColor3 = Color3.fromRGB(255, 255, 255)
+						confirm.TextSize = 10
+						confirm.TextTransparency = 0.5
+						confirm.TextTruncate = Enum.TextTruncate.AtEnd
+						confirm.AutoButtonColor = false
+						confirm.AutomaticSize = Enum.AutomaticSize.Y
+						confirm.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+						confirm.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						confirm.BorderSizePixel = 0
+						confirm.Size = UDim2.fromScale(1, 0)
+					else
+						confirm.Text = "Confirm"
+						confirm.TextColor3 = Color3.fromRGB(255, 255, 255)
+						confirm.TextSize = 12
+						confirm.TextTransparency = 0.5
+						confirm.TextTruncate = Enum.TextTruncate.AtEnd
+						confirm.AutoButtonColor = false
+						confirm.AutomaticSize = Enum.AutomaticSize.Y
+						confirm.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+						confirm.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						confirm.BorderSizePixel = 0
+						confirm.Size = UDim2.fromScale(1, 0)
+					end
 
 					local uIPadding1 = Instance.new("UIPadding")
 					uIPadding1.Name = "UIPadding"
@@ -3971,17 +4824,31 @@ function MacLib:Window(Settings)
 						Enum.FontWeight.Medium,
 						Enum.FontStyle.Normal
 					)
-					cancel.Text = "Cancel"
-					cancel.TextColor3 = Color3.fromRGB(255, 255, 255)
-					cancel.TextSize = 12
-					cancel.TextTransparency = 0.5
-					cancel.TextTruncate = Enum.TextTruncate.AtEnd
-					cancel.AutoButtonColor = false
-					cancel.AutomaticSize = Enum.AutomaticSize.Y
-					cancel.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-					cancel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					cancel.BorderSizePixel = 0
-					cancel.Size = UDim2.fromScale(1, 0)
+					if isMobile() then
+						cancel.Text = "Cancel"
+						cancel.TextColor3 = Color3.fromRGB(255, 255, 255)
+						cancel.TextSize = 10
+						cancel.TextTransparency = 0.5
+						cancel.TextTruncate = Enum.TextTruncate.AtEnd
+						cancel.AutoButtonColor = false
+						cancel.AutomaticSize = Enum.AutomaticSize.Y
+						cancel.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+						cancel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						cancel.BorderSizePixel = 0
+						cancel.Size = UDim2.fromScale(1, 0)
+					else
+						cancel.Text = "Cancel"
+						cancel.TextColor3 = Color3.fromRGB(255, 255, 255)
+						cancel.TextSize = 12
+						cancel.TextTransparency = 0.5
+						cancel.TextTruncate = Enum.TextTruncate.AtEnd
+						cancel.AutoButtonColor = false
+						cancel.AutomaticSize = Enum.AutomaticSize.Y
+						cancel.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+						cancel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						cancel.BorderSizePixel = 0
+						cancel.Size = UDim2.fromScale(1, 0)
+					end
 
 					local baseUICorner1 = Instance.new("UICorner")
 					baseUICorner1.Name = "BaseUICorner"
@@ -4029,20 +4896,37 @@ function MacLib:Window(Settings)
 						Enum.FontWeight.SemiBold,
 						Enum.FontStyle.Normal
 					)
-					paragraphHeader.RichText = true
-					paragraphHeader.Text = ColorpickerFunctions.Settings.Name
-					paragraphHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
-					paragraphHeader.TextSize = 15
-					paragraphHeader.TextTransparency = 0.4
-					paragraphHeader.TextWrapped = true
-					paragraphHeader.TextYAlignment = Enum.TextYAlignment.Top
-					paragraphHeader.AutomaticSize = Enum.AutomaticSize.XY
-					paragraphHeader.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					paragraphHeader.BackgroundTransparency = 1
-					paragraphHeader.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					paragraphHeader.BorderSizePixel = 0
-					paragraphHeader.Size = UDim2.fromScale(1, 0)
-					paragraphHeader.Parent = paragraph
+					if isMobile() then
+						paragraphHeader.RichText = true
+						paragraphHeader.Text = ColorpickerFunctions.Settings.Name
+						paragraphHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
+						paragraphHeader.TextSize = 13
+						paragraphHeader.TextTransparency = 0.4
+						paragraphHeader.TextWrapped = true
+						paragraphHeader.TextYAlignment = Enum.TextYAlignment.Top
+						paragraphHeader.AutomaticSize = Enum.AutomaticSize.XY
+						paragraphHeader.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						paragraphHeader.BackgroundTransparency = 1
+						paragraphHeader.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						paragraphHeader.BorderSizePixel = 0
+						paragraphHeader.Size = UDim2.fromScale(1, 0)
+						paragraphHeader.Parent = paragraph
+					else
+						paragraphHeader.RichText = true
+						paragraphHeader.Text = ColorpickerFunctions.Settings.Name
+						paragraphHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
+						paragraphHeader.TextSize = 15
+						paragraphHeader.TextTransparency = 0.4
+						paragraphHeader.TextWrapped = true
+						paragraphHeader.TextYAlignment = Enum.TextYAlignment.Top
+						paragraphHeader.AutomaticSize = Enum.AutomaticSize.XY
+						paragraphHeader.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						paragraphHeader.BackgroundTransparency = 1
+						paragraphHeader.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						paragraphHeader.BorderSizePixel = 0
+						paragraphHeader.Size = UDim2.fromScale(1, 0)
+						paragraphHeader.Parent = paragraph
+					end
 
 					local uIListLayout9 = Instance.new("UIListLayout")
 					uIListLayout9.Name = "UIListLayout"
@@ -4443,20 +5327,37 @@ function MacLib:Window(Settings)
 						Enum.FontWeight.Medium,
 						Enum.FontStyle.Normal
 					)
-					headerText.RichText = true
-					headerText.Text = HeaderFunctions.Settings.Text or HeaderFunctions.Settings.Name
-					headerText.TextColor3 = Color3.fromRGB(255, 255, 255)
-					headerText.TextSize = 14
-					headerText.TextTransparency = 0.3
-					headerText.TextWrapped = true
-					headerText.TextXAlignment = Enum.TextXAlignment.Left
-					headerText.AutomaticSize = Enum.AutomaticSize.Y
-					headerText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					headerText.BackgroundTransparency = 1
-					headerText.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					headerText.BorderSizePixel = 0
-					headerText.Size = UDim2.fromScale(1, 0)
-					headerText.Parent = header
+					if isMobile() then
+						headerText.RichText = true
+						headerText.Text = HeaderFunctions.Settings.Text or HeaderFunctions.Settings.Name
+						headerText.TextColor3 = Color3.fromRGB(255, 255, 255)
+						headerText.TextSize = 12
+						headerText.TextTransparency = 0.3
+						headerText.TextWrapped = true
+						headerText.TextXAlignment = Enum.TextXAlignment.Left
+						headerText.AutomaticSize = Enum.AutomaticSize.Y
+						headerText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						headerText.BackgroundTransparency = 1
+						headerText.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						headerText.BorderSizePixel = 0
+						headerText.Size = UDim2.fromScale(1, 0)
+						headerText.Parent = header
+					else
+						headerText.RichText = true
+						headerText.Text = HeaderFunctions.Settings.Text or HeaderFunctions.Settings.Name
+						headerText.TextColor3 = Color3.fromRGB(255, 255, 255)
+						headerText.TextSize = 14
+						headerText.TextTransparency = 0.3
+						headerText.TextWrapped = true
+						headerText.TextXAlignment = Enum.TextXAlignment.Left
+						headerText.AutomaticSize = Enum.AutomaticSize.Y
+						headerText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						headerText.BackgroundTransparency = 1
+						headerText.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						headerText.BorderSizePixel = 0
+						headerText.Size = UDim2.fromScale(1, 0)
+						headerText.Parent = header
+					end
 
 					function HeaderFunctions:UpdateName(New)
 						headerText.Text = New
@@ -4485,22 +5386,41 @@ function MacLib:Window(Settings)
 					label.Parent = section
 
 					local labelText = Instance.new("TextLabel")
-					labelText.Name = "LabelText"
-					labelText.FontFace = Font.new(assets.interFont)
-					labelText.RichText = true
-					labelText.Text = LabelFunctions.Settings.Text or LabelFunctions.Settings.Name -- Settings.Name Deprecated use Settings.Text
-					labelText.TextColor3 = Color3.fromRGB(255, 255, 255)
-					labelText.TextSize = 12
-					labelText.TextTransparency = 0.5
-					labelText.TextWrapped = true
-					labelText.TextXAlignment = Enum.TextXAlignment.Left
-					labelText.AutomaticSize = Enum.AutomaticSize.Y
-					labelText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					labelText.BackgroundTransparency = 1
-					labelText.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					labelText.BorderSizePixel = 0
-					labelText.Size = UDim2.fromScale(1, 1)
-					labelText.Parent = label
+					if isMobile() then
+						labelText.Name = "LabelText"
+						labelText.FontFace = Font.new(assets.interFont)
+						labelText.RichText = true
+						labelText.Text = LabelFunctions.Settings.Text or LabelFunctions.Settings.Name -- Settings.Name Deprecated use Settings.Text
+						labelText.TextColor3 = Color3.fromRGB(255, 255, 255)
+						labelText.TextSize = 10
+						labelText.TextTransparency = 0.5
+						labelText.TextWrapped = true
+						labelText.TextXAlignment = Enum.TextXAlignment.Left
+						labelText.AutomaticSize = Enum.AutomaticSize.Y
+						labelText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						labelText.BackgroundTransparency = 1
+						labelText.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						labelText.BorderSizePixel = 0
+						labelText.Size = UDim2.fromScale(1, 1)
+						labelText.Parent = label
+					else
+						labelText.Name = "LabelText"
+						labelText.FontFace = Font.new(assets.interFont)
+						labelText.RichText = true
+						labelText.Text = LabelFunctions.Settings.Text or LabelFunctions.Settings.Name -- Settings.Name Deprecated use Settings.Text
+						labelText.TextColor3 = Color3.fromRGB(255, 255, 255)
+						labelText.TextSize = 12
+						labelText.TextTransparency = 0.5
+						labelText.TextWrapped = true
+						labelText.TextXAlignment = Enum.TextXAlignment.Left
+						labelText.AutomaticSize = Enum.AutomaticSize.Y
+						labelText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						labelText.BackgroundTransparency = 1
+						labelText.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						labelText.BorderSizePixel = 0
+						labelText.Size = UDim2.fromScale(1, 1)
+						labelText.Parent = label
+					end
 
 					function LabelFunctions:UpdateName(New)
 						labelText.Text = New
@@ -4529,22 +5449,41 @@ function MacLib:Window(Settings)
 					subLabel.Parent = section
 
 					local subLabelText = Instance.new("TextLabel")
-					subLabelText.Name = "SubLabelText"
-					subLabelText.FontFace = Font.new(assets.interFont)
-					subLabelText.RichText = true
-					subLabelText.Text = SubLabelFunctions.Settings.Text or SubLabelFunctions.Settings.Name -- Settings.Name Deprecated use Settings.Text
-					subLabelText.TextColor3 = Color3.fromRGB(255, 255, 255)
-					subLabelText.TextSize = 12
-					subLabelText.TextTransparency = 0.7
-					subLabelText.TextWrapped = true
-					subLabelText.TextXAlignment = Enum.TextXAlignment.Left
-					subLabelText.AutomaticSize = Enum.AutomaticSize.Y
-					subLabelText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					subLabelText.BackgroundTransparency = 1
-					subLabelText.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					subLabelText.BorderSizePixel = 0
-					subLabelText.Size = UDim2.fromScale(1, 1)
-					subLabelText.Parent = subLabel
+					if isMobile() then
+						subLabelText.Name = "SubLabelText"
+						subLabelText.FontFace = Font.new(assets.interFont)
+						subLabelText.RichText = true
+						subLabelText.Text = SubLabelFunctions.Settings.Text or SubLabelFunctions.Settings.Name -- Settings.Name Deprecated use Settings.Text
+						subLabelText.TextColor3 = Color3.fromRGB(255, 255, 255)
+						subLabelText.TextSize = 10
+						subLabelText.TextTransparency = 0.7
+						subLabelText.TextWrapped = true
+						subLabelText.TextXAlignment = Enum.TextXAlignment.Left
+						subLabelText.AutomaticSize = Enum.AutomaticSize.Y
+						subLabelText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						subLabelText.BackgroundTransparency = 1
+						subLabelText.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						subLabelText.BorderSizePixel = 0
+						subLabelText.Size = UDim2.fromScale(1, 1)
+						subLabelText.Parent = subLabel
+					else
+						subLabelText.Name = "SubLabelText"
+						subLabelText.FontFace = Font.new(assets.interFont)
+						subLabelText.RichText = true
+						subLabelText.Text = SubLabelFunctions.Settings.Text or SubLabelFunctions.Settings.Name -- Settings.Name Deprecated use Settings.Text
+						subLabelText.TextColor3 = Color3.fromRGB(255, 255, 255)
+						subLabelText.TextSize = 12
+						subLabelText.TextTransparency = 0.7
+						subLabelText.TextWrapped = true
+						subLabelText.TextXAlignment = Enum.TextXAlignment.Left
+						subLabelText.AutomaticSize = Enum.AutomaticSize.Y
+						subLabelText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						subLabelText.BackgroundTransparency = 1
+						subLabelText.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						subLabelText.BorderSizePixel = 0
+						subLabelText.Size = UDim2.fromScale(1, 1)
+						subLabelText.Parent = subLabel
+					end
 
 					function SubLabelFunctions:UpdateName(New)
 						subLabelText.Text = New
@@ -4579,20 +5518,37 @@ function MacLib:Window(Settings)
 						Enum.FontWeight.Medium,
 						Enum.FontStyle.Normal
 					)
-					paragraphHeader.RichText = true
-					paragraphHeader.Text = ParagraphFunctions.Settings.Header
-					paragraphHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
-					paragraphHeader.TextSize = 12
-					paragraphHeader.TextTransparency = 0.4
-					paragraphHeader.TextWrapped = true
-					paragraphHeader.TextXAlignment = Enum.TextXAlignment.Left
-					paragraphHeader.AutomaticSize = Enum.AutomaticSize.Y
-					paragraphHeader.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					paragraphHeader.BackgroundTransparency = 1
-					paragraphHeader.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					paragraphHeader.BorderSizePixel = 0
-					paragraphHeader.Size = UDim2.fromScale(1, 0)
-					paragraphHeader.Parent = paragraph
+					if isMobile() then
+						paragraphHeader.RichText = true
+						paragraphHeader.Text = ParagraphFunctions.Settings.Header
+						paragraphHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
+						paragraphHeader.TextSize = 10
+						paragraphHeader.TextTransparency = 0.4
+						paragraphHeader.TextWrapped = true
+						paragraphHeader.TextXAlignment = Enum.TextXAlignment.Left
+						paragraphHeader.AutomaticSize = Enum.AutomaticSize.Y
+						paragraphHeader.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						paragraphHeader.BackgroundTransparency = 1
+						paragraphHeader.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						paragraphHeader.BorderSizePixel = 0
+						paragraphHeader.Size = UDim2.fromScale(1, 0)
+						paragraphHeader.Parent = paragraph
+					else
+						paragraphHeader.RichText = true
+						paragraphHeader.Text = ParagraphFunctions.Settings.Header
+						paragraphHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
+						paragraphHeader.TextSize = 12
+						paragraphHeader.TextTransparency = 0.4
+						paragraphHeader.TextWrapped = true
+						paragraphHeader.TextXAlignment = Enum.TextXAlignment.Left
+						paragraphHeader.AutomaticSize = Enum.AutomaticSize.Y
+						paragraphHeader.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						paragraphHeader.BackgroundTransparency = 1
+						paragraphHeader.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						paragraphHeader.BorderSizePixel = 0
+						paragraphHeader.Size = UDim2.fromScale(1, 0)
+						paragraphHeader.Parent = paragraph
+					end
 
 					local uIListLayout = Instance.new("UIListLayout")
 					uIListLayout.Name = "UIListLayout"
@@ -4601,23 +5557,43 @@ function MacLib:Window(Settings)
 					uIListLayout.Parent = paragraph
 
 					local paragraphBody = Instance.new("TextLabel")
-					paragraphBody.Name = "ParagraphBody"
-					paragraphBody.FontFace = Font.new(assets.interFont)
-					paragraphBody.RichText = true
-					paragraphBody.Text = ParagraphFunctions.Settings.Body
-					paragraphBody.TextColor3 = Color3.fromRGB(255, 255, 255)
-					paragraphBody.TextSize = 12
-					paragraphBody.TextTransparency = 0.5
-					paragraphBody.TextWrapped = true
-					paragraphBody.TextXAlignment = Enum.TextXAlignment.Left
-					paragraphBody.AutomaticSize = Enum.AutomaticSize.Y
-					paragraphBody.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					paragraphBody.BackgroundTransparency = 1
-					paragraphBody.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					paragraphBody.BorderSizePixel = 0
-					paragraphBody.LayoutOrder = 1
-					paragraphBody.Size = UDim2.fromScale(1, 0)
-					paragraphBody.Parent = paragraph
+					if isMobile() then
+						paragraphBody.Name = "ParagraphBody"
+						paragraphBody.FontFace = Font.new(assets.interFont)
+						paragraphBody.RichText = true
+						paragraphBody.Text = ParagraphFunctions.Settings.Body
+						paragraphBody.TextColor3 = Color3.fromRGB(255, 255, 255)
+						paragraphBody.TextSize = 10
+						paragraphBody.TextTransparency = 0.5
+						paragraphBody.TextWrapped = true
+						paragraphBody.TextXAlignment = Enum.TextXAlignment.Left
+						paragraphBody.AutomaticSize = Enum.AutomaticSize.Y
+						paragraphBody.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						paragraphBody.BackgroundTransparency = 1
+						paragraphBody.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						paragraphBody.BorderSizePixel = 0
+						paragraphBody.LayoutOrder = 1
+						paragraphBody.Size = UDim2.fromScale(1, 0)
+						paragraphBody.Parent = paragraph
+					else
+						paragraphBody.Name = "ParagraphBody"
+						paragraphBody.FontFace = Font.new(assets.interFont)
+						paragraphBody.RichText = true
+						paragraphBody.Text = ParagraphFunctions.Settings.Body
+						paragraphBody.TextColor3 = Color3.fromRGB(255, 255, 255)
+						paragraphBody.TextSize = 12
+						paragraphBody.TextTransparency = 0.5
+						paragraphBody.TextWrapped = true
+						paragraphBody.TextXAlignment = Enum.TextXAlignment.Left
+						paragraphBody.AutomaticSize = Enum.AutomaticSize.Y
+						paragraphBody.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						paragraphBody.BackgroundTransparency = 1
+						paragraphBody.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						paragraphBody.BorderSizePixel = 0
+						paragraphBody.LayoutOrder = 1
+						paragraphBody.Size = UDim2.fromScale(1, 0)
+						paragraphBody.Parent = paragraph
+					end
 
 					function ParagraphFunctions:UpdateHeader(New)
 						paragraphHeader.Text = New
@@ -4937,20 +5913,37 @@ function MacLib:Window(Settings)
 			Enum.FontWeight.SemiBold,
 			Enum.FontStyle.Normal
 		)
-		notificationTitle.RichText = true
-		notificationTitle.Text = Settings.Title
-		notificationTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-		notificationTitle.TextSize = 12
-		notificationTitle.TextTransparency = 0.2
-		notificationTitle.TextTruncate = Enum.TextTruncate.SplitWord
-		notificationTitle.TextXAlignment = Enum.TextXAlignment.Left
-		notificationTitle.TextYAlignment = Enum.TextYAlignment.Top
-		notificationTitle.AutomaticSize = Enum.AutomaticSize.XY
-		notificationTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		notificationTitle.BackgroundTransparency = 1
-		notificationTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		notificationTitle.BorderSizePixel = 0
-		notificationTitle.Size = UDim2.new(1, -12, 0, 0)
+		if isMobile() then
+			notificationTitle.RichText = true
+			notificationTitle.Text = Settings.Title
+			notificationTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+			notificationTitle.TextSize = 10
+			notificationTitle.TextTransparency = 0.2
+			notificationTitle.TextTruncate = Enum.TextTruncate.SplitWord
+			notificationTitle.TextXAlignment = Enum.TextXAlignment.Left
+			notificationTitle.TextYAlignment = Enum.TextYAlignment.Top
+			notificationTitle.AutomaticSize = Enum.AutomaticSize.XY
+			notificationTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			notificationTitle.BackgroundTransparency = 1
+			notificationTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			notificationTitle.BorderSizePixel = 0
+			notificationTitle.Size = UDim2.new(1, -12, 0, 0)
+		else
+			notificationTitle.RichText = true
+			notificationTitle.Text = Settings.Title
+			notificationTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+			notificationTitle.TextSize = 12
+			notificationTitle.TextTransparency = 0.2
+			notificationTitle.TextTruncate = Enum.TextTruncate.SplitWord
+			notificationTitle.TextXAlignment = Enum.TextXAlignment.Left
+			notificationTitle.TextYAlignment = Enum.TextYAlignment.Top
+			notificationTitle.AutomaticSize = Enum.AutomaticSize.XY
+			notificationTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			notificationTitle.BackgroundTransparency = 1
+			notificationTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			notificationTitle.BorderSizePixel = 0
+			notificationTitle.Size = UDim2.new(1, -12, 0, 0)
+		end
 
 		local notificationTitleUIPadding = Instance.new("UIPadding")
 		notificationTitleUIPadding.Name = "NotificationTitleUIPadding"
@@ -4966,20 +5959,37 @@ function MacLib:Window(Settings)
 			Enum.FontWeight.Medium,
 			Enum.FontStyle.Normal
 		)
-		notificationDescription.Text = Settings.Description
-		notificationDescription.TextColor3 = Color3.fromRGB(255, 255, 255)
-		notificationDescription.TextSize = 10
-		notificationDescription.TextTransparency = 0.5
-		notificationDescription.TextWrapped = true
-		notificationDescription.RichText = true
-		notificationDescription.TextXAlignment = Enum.TextXAlignment.Left
-		notificationDescription.TextYAlignment = Enum.TextYAlignment.Top
-		notificationDescription.AutomaticSize = Enum.AutomaticSize.XY
-		notificationDescription.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		notificationDescription.BackgroundTransparency = 1
-		notificationDescription.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		notificationDescription.BorderSizePixel = 0
-		notificationDescription.Size = UDim2.new(1, -12, 0, 0)
+		if isMobile() then
+			notificationDescription.Text = Settings.Description
+			notificationDescription.TextColor3 = Color3.fromRGB(255, 255, 255)
+			notificationDescription.TextSize = 8
+			notificationDescription.TextTransparency = 0.5
+			notificationDescription.TextWrapped = true
+			notificationDescription.RichText = true
+			notificationDescription.TextXAlignment = Enum.TextXAlignment.Left
+			notificationDescription.TextYAlignment = Enum.TextYAlignment.Top
+			notificationDescription.AutomaticSize = Enum.AutomaticSize.XY
+			notificationDescription.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			notificationDescription.BackgroundTransparency = 1
+			notificationDescription.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			notificationDescription.BorderSizePixel = 0
+			notificationDescription.Size = UDim2.new(1, -12, 0, 0)
+		else
+			notificationDescription.Text = Settings.Description
+			notificationDescription.TextColor3 = Color3.fromRGB(255, 255, 255)
+			notificationDescription.TextSize = 10
+			notificationDescription.TextTransparency = 0.5
+			notificationDescription.TextWrapped = true
+			notificationDescription.RichText = true
+			notificationDescription.TextXAlignment = Enum.TextXAlignment.Left
+			notificationDescription.TextYAlignment = Enum.TextYAlignment.Top
+			notificationDescription.AutomaticSize = Enum.AutomaticSize.XY
+			notificationDescription.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			notificationDescription.BackgroundTransparency = 1
+			notificationDescription.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			notificationDescription.BorderSizePixel = 0
+			notificationDescription.Size = UDim2.new(1, -12, 0, 0)
+		end
 
 		local notificationDescriptionUIPadding = Instance.new("UIPadding")
 		notificationDescriptionUIPadding.Name = "NotificationDescriptionUIPadding"
@@ -5009,21 +6019,39 @@ function MacLib:Window(Settings)
 		notificationControls.Size = UDim2.fromScale(1, 1)
 
 		local interactable = Instance.new("TextButton")
-		interactable.Name = "Interactable"
-		interactable.FontFace = Font.new(assets.interFont)
-		interactable.Text = "✓"
-		interactable.TextColor3 = Color3.fromRGB(255, 255, 255)
-		interactable.TextSize = 14
-		interactable.TextTransparency = 0.2
-		interactable.AnchorPoint = Vector2.new(1, 0.5)
-		interactable.AutomaticSize = Enum.AutomaticSize.XY
-		interactable.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		interactable.BackgroundTransparency = 1
-		interactable.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		interactable.BorderSizePixel = 0
-		interactable.LayoutOrder = 1
-		interactable.Position = UDim2.fromScale(1, 0.5)
-		interactable.Parent = notificationControls
+		if isMobile() then
+			interactable.Name = "Interactable"
+			interactable.FontFace = Font.new(assets.interFont)
+			interactable.Text = "✓"
+			interactable.TextColor3 = Color3.fromRGB(255, 255, 255)
+			interactable.TextSize = 12
+			interactable.TextTransparency = 0.2
+			interactable.AnchorPoint = Vector2.new(1, 0.5)
+			interactable.AutomaticSize = Enum.AutomaticSize.XY
+			interactable.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			interactable.BackgroundTransparency = 1
+			interactable.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			interactable.BorderSizePixel = 0
+			interactable.LayoutOrder = 1
+			interactable.Position = UDim2.fromScale(1, 0.5)
+			interactable.Parent = notificationControls
+		else
+			interactable.Name = "Interactable"
+			interactable.FontFace = Font.new(assets.interFont)
+			interactable.Text = "✓"
+			interactable.TextColor3 = Color3.fromRGB(255, 255, 255)
+			interactable.TextSize = 14
+			interactable.TextTransparency = 0.2
+			interactable.AnchorPoint = Vector2.new(1, 0.5)
+			interactable.AutomaticSize = Enum.AutomaticSize.XY
+			interactable.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			interactable.BackgroundTransparency = 1
+			interactable.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			interactable.BorderSizePixel = 0
+			interactable.LayoutOrder = 1
+			interactable.Position = UDim2.fromScale(1, 0.5)
+			interactable.Parent = notificationControls
+		end
 
 		local uIPadding = Instance.new("UIPadding")
 		uIPadding.Name = "UIPadding"
@@ -5178,19 +6206,35 @@ function MacLib:Window(Settings)
 			Enum.FontWeight.Medium,
 			Enum.FontStyle.Normal
 		)
-		paragraphHeader.RichText = true
-		paragraphHeader.Text = Settings.Title
-		paragraphHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
-		paragraphHeader.TextSize = 14
-		paragraphHeader.TextTransparency = 0.4
-		paragraphHeader.TextWrapped = true
-		paragraphHeader.AutomaticSize = Enum.AutomaticSize.Y
-		paragraphHeader.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		paragraphHeader.BackgroundTransparency = 1
-		paragraphHeader.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		paragraphHeader.BorderSizePixel = 0
-		paragraphHeader.Size = UDim2.fromScale(1, 0)
-		paragraphHeader.Parent = paragraph
+		if isMobile() then
+			paragraphHeader.RichText = true
+			paragraphHeader.Text = Settings.Title
+			paragraphHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
+			paragraphHeader.TextSize = 12
+			paragraphHeader.TextTransparency = 0.4
+			paragraphHeader.TextWrapped = true
+			paragraphHeader.AutomaticSize = Enum.AutomaticSize.Y
+			paragraphHeader.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			paragraphHeader.BackgroundTransparency = 1
+			paragraphHeader.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			paragraphHeader.BorderSizePixel = 0
+			paragraphHeader.Size = UDim2.fromScale(1, 0)
+			paragraphHeader.Parent = paragraph
+		else
+			paragraphHeader.RichText = true
+			paragraphHeader.Text = Settings.Title
+			paragraphHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
+			paragraphHeader.TextSize = 14
+			paragraphHeader.TextTransparency = 0.4
+			paragraphHeader.TextWrapped = true
+			paragraphHeader.AutomaticSize = Enum.AutomaticSize.Y
+			paragraphHeader.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			paragraphHeader.BackgroundTransparency = 1
+			paragraphHeader.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			paragraphHeader.BorderSizePixel = 0
+			paragraphHeader.Size = UDim2.fromScale(1, 0)
+			paragraphHeader.Parent = paragraph
+		end
 
 		local uIListLayout = Instance.new("UIListLayout")
 		uIListLayout.Name = "UIListLayout"
@@ -5199,22 +6243,41 @@ function MacLib:Window(Settings)
 		uIListLayout.Parent = paragraph
 
 		local paragraphBody = Instance.new("TextLabel")
-		paragraphBody.Name = "ParagraphBody"
-		paragraphBody.FontFace = Font.new(assets.interFont)
-		paragraphBody.RichText = true
-		paragraphBody.Text = Settings.Description
-		paragraphBody.TextColor3 = Color3.fromRGB(255, 255, 255)
-		paragraphBody.TextSize = 12
-		paragraphBody.TextTransparency = 0.5
-		paragraphBody.TextWrapped = true
-		paragraphBody.AutomaticSize = Enum.AutomaticSize.Y
-		paragraphBody.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		paragraphBody.BackgroundTransparency = 1
-		paragraphBody.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		paragraphBody.BorderSizePixel = 0
-		paragraphBody.LayoutOrder = 1
-		paragraphBody.Size = UDim2.fromScale(1, 0)
-		paragraphBody.Parent = paragraph
+		if isMobile() then
+			paragraphBody.Name = "ParagraphBody"
+			paragraphBody.FontFace = Font.new(assets.interFont)
+			paragraphBody.RichText = true
+			paragraphBody.Text = Settings.Description
+			paragraphBody.TextColor3 = Color3.fromRGB(255, 255, 255)
+			paragraphBody.TextSize = 10
+			paragraphBody.TextTransparency = 0.5
+			paragraphBody.TextWrapped = true
+			paragraphBody.AutomaticSize = Enum.AutomaticSize.Y
+			paragraphBody.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			paragraphBody.BackgroundTransparency = 1
+			paragraphBody.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			paragraphBody.BorderSizePixel = 0
+			paragraphBody.LayoutOrder = 1
+			paragraphBody.Size = UDim2.fromScale(1, 0)
+			paragraphBody.Parent = paragraph
+		else
+			paragraphBody.Name = "ParagraphBody"
+			paragraphBody.FontFace = Font.new(assets.interFont)
+			paragraphBody.RichText = true
+			paragraphBody.Text = Settings.Description
+			paragraphBody.TextColor3 = Color3.fromRGB(255, 255, 255)
+			paragraphBody.TextSize = 12
+			paragraphBody.TextTransparency = 0.5
+			paragraphBody.TextWrapped = true
+			paragraphBody.AutomaticSize = Enum.AutomaticSize.Y
+			paragraphBody.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			paragraphBody.BackgroundTransparency = 1
+			paragraphBody.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			paragraphBody.BorderSizePixel = 0
+			paragraphBody.LayoutOrder = 1
+			paragraphBody.Size = UDim2.fromScale(1, 0)
+			paragraphBody.Parent = paragraph
+		end
 
 		paragraph.Parent = prompt
 
@@ -5274,19 +6337,35 @@ function MacLib:Window(Settings)
 
 		for _, v in pairs(Settings.Buttons) do
 			local button = Instance.new("TextButton")
-			button.Name = "Button"
-			button.FontFace = Font.new(assets.interFont)
-			button.Text = v.Name
-			button.TextColor3 = Color3.fromRGB(255, 255, 255)
-			button.TextSize = 12
-			button.TextTransparency = 0.5
-			button.TextTruncate = Enum.TextTruncate.AtEnd
-			button.AutoButtonColor = false
-			button.AutomaticSize = Enum.AutomaticSize.Y
-			button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-			button.BorderColor3 = Color3.fromRGB(0, 0, 0)
-			button.BorderSizePixel = 0
-			button.Size = UDim2.fromScale(1, 0)
+			if isMobile() then
+				button.Name = "Button"
+				button.FontFace = Font.new(assets.interFont)
+				button.Text = v.Name
+				button.TextColor3 = Color3.fromRGB(255, 255, 255)
+				button.TextSize = 10
+				button.TextTransparency = 0.5
+				button.TextTruncate = Enum.TextTruncate.AtEnd
+				button.AutoButtonColor = false
+				button.AutomaticSize = Enum.AutomaticSize.Y
+				button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+				button.BorderColor3 = Color3.fromRGB(0, 0, 0)
+				button.BorderSizePixel = 0
+				button.Size = UDim2.fromScale(1, 0)
+			else
+				button.Name = "Button"
+				button.FontFace = Font.new(assets.interFont)
+				button.Text = v.Name
+				button.TextColor3 = Color3.fromRGB(255, 255, 255)
+				button.TextSize = 12
+				button.TextTransparency = 0.5
+				button.TextTruncate = Enum.TextTruncate.AtEnd
+				button.AutoButtonColor = false
+				button.AutomaticSize = Enum.AutomaticSize.Y
+				button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+				button.BorderColor3 = Color3.fromRGB(0, 0, 0)
+				button.BorderSizePixel = 0
+				button.Size = UDim2.fromScale(1, 0)
+			end
 
 			local uIPadding1 = Instance.new("UIPadding")
 			uIPadding1.Name = "UIPadding"
