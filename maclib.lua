@@ -24,6 +24,7 @@ local acrylicBlur
 local hasGlobalSetting
 
 local tabs = {}
+local originalSizes = {}
 local currentTabInstance = nil
 local tabIndex = 0
 local unloaded = false
