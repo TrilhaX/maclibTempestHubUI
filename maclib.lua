@@ -81,21 +81,19 @@ function MacLib:HideUI(state)
 end
 
 function isMobile()
-	return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+    return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 end
 
 function getBaseSize()
-	return isMobile() and mobileSize2 or pcSize2
+    return isMobile() and mobileSize2 or pcSize2
 end
 
 function storeOriginalFrameSizes(guiObject)
-	for _, obj in ipairs(guiObject:GetDescendants()) do
-		if obj:IsA("Frame") then
-			if not originalSizes[obj] then
-				originalSizes[obj] = obj.Size
-			end
-		end
-	end
+    for _, obj in ipairs(guiObject:GetDescendants()) do
+        if obj:IsA("Frame") and not originalSizes[obj] then
+            originalSizes[obj] = obj.Size
+        end
+    end
 end
 
 function MacLib:changeUISize(scale)
@@ -110,16 +108,43 @@ function MacLib:changeUISize(scale)
 	local widthScale = (baseSize.X * scale) / baseSize.X
 	local heightScale = (baseSize.Y * scale) / baseSize.Y
 
-	for frame, originalSize in pairs(originalSizes) do
-		if frame and frame.Parent then
-			frame.Size = UDim2.new(
-				originalSize.X.Scale,
-				math.floor(originalSize.X.Offset * widthScale),
-				originalSize.Y.Scale,
-				math.floor(originalSize.Y.Offset * heightScale)
-			)
-		end
-	end
+    for frame, origSize in pairs(originalSizes) do
+        if frame.Parent then
+            frame.Size = UDim2.new(
+                origSize.X.Scale * scale,
+                math.floor(origSize.X.Offset * scale),
+                origSize.Y.Scale * scale,
+                math.floor(origSize.Y.Offset * scale)
+            )
+        end
+    end
+end
+
+function toggleBlackScreen(value)
+    local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    if value == true then
+        if not playerGui:FindFirstChild("BlackScreenGui") then
+            local screenGui = Instance.new("ScreenGui")
+            screenGui.Name = "BlackScreenGui"
+            screenGui.ResetOnSpawn = false
+            screenGui.IgnoreGuiInset = true
+            screenGui.Parent = playerGui
+
+            local frame = Instance.new("Frame")
+            frame.AnchorPoint = Vector2.new(0.5, 0.5)
+            frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+            frame.Size = UDim2.new(1, 0, 1, 0)
+            frame.BackgroundColor3 = Color3.new(0, 0, 0)
+            frame.BorderSizePixel = 0
+            frame.Parent = screenGui
+        end
+    else
+        local blackScreen = playerGui:FindFirstChild("BlackScreenGui")
+        if blackScreen then
+            blackScreen:Destroy()
+        end
+    end
 end
 
 function MacLib:lowCpuUsage(value)
@@ -128,6 +153,7 @@ function MacLib:lowCpuUsage(value)
 	elseif value == false then
 		game:GetService("RunService"):Set3dRenderingEnabled(true)
 	end
+    toggleBlackScreen(value)
 end
 
 function fpsBoostFunction()
