@@ -25,6 +25,8 @@ local hasGlobalSetting
 
 local tabs = {}
 local originalSizes = {}
+local pcSize2 = Vector2.new(850, 650)
+local mobileSize2 = Vector2.new(650, 400)
 local currentTabInstance = nil
 local tabIndex = 0
 local unloaded = false
