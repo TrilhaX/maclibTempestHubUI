@@ -81,19 +81,19 @@ function MacLib:HideUI(state)
 end
 
 function isMobile()
-    return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+	return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 end
 
 function getBaseSize()
-    return isMobile() and mobileSize2 or pcSize2
+	return isMobile() and mobileSize2 or pcSize2
 end
 
 function storeOriginalFrameSizes(guiObject)
-    for _, obj in ipairs(guiObject:GetDescendants()) do
-        if obj:IsA("Frame") and not originalSizes[obj] then
-            originalSizes[obj] = obj.Size
-        end
-    end
+	for _, obj in ipairs(guiObject:GetDescendants()) do
+		if obj:IsA("Frame") and not originalSizes[obj] then
+			originalSizes[obj] = obj.Size
+		end
+	end
 end
 
 function MacLib:changeUISize(scale)
@@ -108,43 +108,43 @@ function MacLib:changeUISize(scale)
 	local widthScale = (baseSize.X * scale) / baseSize.X
 	local heightScale = (baseSize.Y * scale) / baseSize.Y
 
-    for frame, origSize in pairs(originalSizes) do
-        if frame.Parent then
-            frame.Size = UDim2.new(
-                origSize.X.Scale * scale,
-                math.floor(origSize.X.Offset * scale),
-                origSize.Y.Scale * scale,
-                math.floor(origSize.Y.Offset * scale)
-            )
-        end
-    end
+	for frame, origSize in pairs(originalSizes) do
+		if frame.Parent then
+			frame.Size = UDim2.new(
+				origSize.X.Scale * scale,
+				math.floor(origSize.X.Offset * scale),
+				origSize.Y.Scale * scale,
+				math.floor(origSize.Y.Offset * scale)
+			)
+		end
+	end
 end
 
 function toggleBlackScreen(value)
-    local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+	local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
-    if value == true then
-        if not playerGui:FindFirstChild("BlackScreenGui") then
-            local screenGui = Instance.new("ScreenGui")
-            screenGui.Name = "BlackScreenGui"
-            screenGui.ResetOnSpawn = false
-            screenGui.IgnoreGuiInset = true
-            screenGui.Parent = playerGui
+	if value == true then
+		if not playerGui:FindFirstChild("BlackScreenGui") then
+			local screenGui = Instance.new("ScreenGui")
+			screenGui.Name = "BlackScreenGui"
+			screenGui.ResetOnSpawn = false
+			screenGui.IgnoreGuiInset = true
+			screenGui.Parent = playerGui
 
-            local frame = Instance.new("Frame")
-            frame.AnchorPoint = Vector2.new(0.5, 0.5)
-            frame.Position = UDim2.new(0.5, 0, 0.5, 0)
-            frame.Size = UDim2.new(1, 0, 1, 0)
-            frame.BackgroundColor3 = Color3.new(0, 0, 0)
-            frame.BorderSizePixel = 0
-            frame.Parent = screenGui
-        end
-    else
-        local blackScreen = playerGui:FindFirstChild("BlackScreenGui")
-        if blackScreen then
-            blackScreen:Destroy()
-        end
-    end
+			local frame = Instance.new("Frame")
+			frame.AnchorPoint = Vector2.new(0.5, 0.5)
+			frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+			frame.Size = UDim2.new(1, 0, 1, 0)
+			frame.BackgroundColor3 = Color3.new(0, 0, 0)
+			frame.BorderSizePixel = 0
+			frame.Parent = screenGui
+		end
+	else
+		local blackScreen = playerGui:FindFirstChild("BlackScreenGui")
+		if blackScreen then
+			blackScreen:Destroy()
+		end
+	end
 end
 
 function MacLib:lowCpuUsage(value)
@@ -153,7 +153,7 @@ function MacLib:lowCpuUsage(value)
 	elseif value == false then
 		game:GetService("RunService"):Set3dRenderingEnabled(true)
 	end
-    toggleBlackScreen(value)
+	toggleBlackScreen(value)
 end
 
 function fpsBoostFunction()
@@ -295,7 +295,7 @@ function MacLib:Window(Settings)
 
 	tempestButton.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
+			or input.UserInputType == Enum.UserInputType.Touch then
 			draggingBackground = true
 			dragStartBg = input.Position
 			startPosBg = backgroundFrame.Position
@@ -310,7 +310,7 @@ function MacLib:Window(Settings)
 
 	tempestButton.InputChanged:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement
-		or input.UserInputType == Enum.UserInputType.Touch then
+			or input.UserInputType == Enum.UserInputType.Touch then
 			dragInputBg = input
 		end
 	end)
@@ -424,14 +424,6 @@ function MacLib:Window(Settings)
 		dividerInteract.Parent = divider
 	end
 
-	local windowControls = Instance.new("Frame")
-	windowControls.Name = "WindowControls"
-	windowControls.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	windowControls.BackgroundTransparency = 1
-	windowControls.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	windowControls.BorderSizePixel = 0
-	windowControls.Size = UDim2.new(1, 0, 0, 31)
-
 	local controls = Instance.new("Frame")
 	controls.Name = "Controls"
 	controls.BackgroundColor3 = Color3.fromRGB(119, 174, 94)
@@ -453,167 +445,13 @@ function MacLib:Window(Settings)
 	uIPadding.PaddingLeft = UDim.new(0, 11)
 	uIPadding.Parent = controls
 
-	local windowControlSettings = {
-		sizes = { enabled = UDim2.fromOffset(8, 8), disabled = UDim2.fromOffset(7, 7) },
-		transparencies = { enabled = 0, disabled = 1 },
-		strokeTransparency = 0.9,
-	}
-
-	local stroke = Instance.new("UIStroke")
-	stroke.Name = "BaseUIStroke"
-	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	stroke.Color = Color3.fromRGB(255, 255, 255)
-	stroke.Transparency = windowControlSettings.strokeTransparency
-
-	local exit = Instance.new("TextButton")
-	if isMobile() then
-		exit.Name = "Exit"
-		exit.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-		exit.Text = ""
-		exit.TextColor3 = Color3.fromRGB(0, 0, 0)
-		exit.TextSize = 10
-		exit.AutoButtonColor = false
-		exit.BackgroundColor3 = Color3.fromRGB(250, 93, 86)
-		exit.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		exit.BorderSizePixel = 0
-	else
-		exit.Name = "Exit"
-		exit.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-		exit.Text = ""
-		exit.TextColor3 = Color3.fromRGB(0, 0, 0)
-		exit.TextSize = 12
-		exit.AutoButtonColor = false
-		exit.BackgroundColor3 = Color3.fromRGB(250, 93, 86)
-		exit.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		exit.BorderSizePixel = 0
-	end
-
-	local uICorner = Instance.new("UICorner")
-	uICorner.Name = "UICorner"
-	uICorner.CornerRadius = UDim.new(1, 0)
-	uICorner.Parent = exit
-
-	exit.Parent = controls
-
-	local minimize = Instance.new("TextButton")
-	if isMobile() then
-		minimize.Name = "Minimize"
-		minimize.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-		minimize.Text = ""
-		minimize.TextColor3 = Color3.fromRGB(0, 0, 0)
-		minimize.TextSize = 10
-		minimize.AutoButtonColor = false
-		minimize.BackgroundColor3 = Color3.fromRGB(252, 190, 57)
-		minimize.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		minimize.BorderSizePixel = 0
-		minimize.LayoutOrder = 1
-	else
-		minimize.Name = "Minimize"
-		minimize.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-		minimize.Text = ""
-		minimize.TextColor3 = Color3.fromRGB(0, 0, 0)
-		minimize.TextSize = 12
-		minimize.AutoButtonColor = false
-		minimize.BackgroundColor3 = Color3.fromRGB(252, 190, 57)
-		minimize.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		minimize.BorderSizePixel = 0
-		minimize.LayoutOrder = 1
-	end
-
-	local uICorner1 = Instance.new("UICorner")
-	uICorner1.Name = "UICorner"
-	uICorner1.CornerRadius = UDim.new(1, 0)
-	uICorner1.Parent = minimize
-
-	minimize.Parent = controls
-
-	local maximize = Instance.new("TextButton")
-	if isMobile() then
-		maximize.Name = "Maximize"
-		maximize.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-		maximize.Text = ""
-		maximize.TextColor3 = Color3.fromRGB(0, 0, 0)
-		maximize.TextSize = 10
-		maximize.AutoButtonColor = false
-		maximize.BackgroundColor3 = Color3.fromRGB(119, 174, 94)
-		maximize.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		maximize.BorderSizePixel = 0
-		maximize.LayoutOrder = 1
-	else
-		maximize.Name = "Maximize"
-		maximize.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-		maximize.Text = ""
-		maximize.TextColor3 = Color3.fromRGB(0, 0, 0)
-		maximize.TextSize = 12
-		maximize.AutoButtonColor = false
-		maximize.BackgroundColor3 = Color3.fromRGB(119, 174, 94)
-		maximize.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		maximize.BorderSizePixel = 0
-		maximize.LayoutOrder = 1
-	end
-
-	local uICorner2 = Instance.new("UICorner")
-	uICorner2.Name = "UICorner"
-	uICorner2.CornerRadius = UDim.new(1, 0)
-	uICorner2.Parent = maximize
-
-	maximize.Parent = controls
-
-	local function applyState(button, enabled)
-		local size = enabled and windowControlSettings.sizes.enabled or windowControlSettings.sizes.disabled
-		local transparency = enabled and windowControlSettings.transparencies.enabled or windowControlSettings.transparencies.disabled
-
-		button.Size = size
-		button.BackgroundTransparency = transparency
-		button.Active = enabled
-		button.Interactable = enabled
-
-		for _, child in ipairs(button:GetChildren()) do
-			if child:IsA("UIStroke") then
-				child.Transparency = transparency
-			end
-		end
-		if not enabled then
-			stroke:Clone().Parent = button
-		end
-	end
-
-	applyState(maximize, false)
-
-	local controlsList = {exit, minimize}
-	for _, button in pairs(controlsList) do
-		local buttonName = button.Name
-		local isEnabled = true
-
-		if Settings.DisabledWindowControls and table.find(Settings.DisabledWindowControls, buttonName) then
-			isEnabled = false
-		end
-
-		applyState(button, isEnabled)
-	end
-
-	controls.Parent = windowControls
-
-	local divider1 = Instance.new("Frame")
-	divider1.Name = "Divider"
-	divider1.AnchorPoint = Vector2.new(0, 1)
-	divider1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	divider1.BackgroundTransparency = 0.9
-	divider1.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	divider1.BorderSizePixel = 0
-	divider1.Position = UDim2.fromScale(0, 1)
-	divider1.Size = UDim2.new(1, 0, 0, 1)
-	divider1.Parent = windowControls
-
-	windowControls.Parent = sidebar
-
 	local information = Instance.new("Frame")
 	information.Name = "Information"
 	information.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	information.BackgroundTransparency = 1
 	information.BorderColor3 = Color3.fromRGB(0, 0, 0)
 	information.BorderSizePixel = 0
-	information.Position = UDim2.fromOffset(0, 31)
+	information.Position = UDim2.fromOffset(0, 10)
 	information.Size = UDim2.new(1, 0, 0, 60)
 
 	local divider2 = Instance.new("Frame")
@@ -1233,7 +1071,7 @@ function MacLib:Window(Settings)
 
 	topbar.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 
-		or input.UserInputType == Enum.UserInputType.Touch then
+			or input.UserInputType == Enum.UserInputType.Touch then
 			draggingBase = true
 			dragStartBase = input.Position
 			startPosBase = base.Position
@@ -6517,25 +6355,6 @@ function MacLib:Window(Settings)
 		end
 	end)
 
-	minimize.MouseButton1Click:Connect(ToggleMenu)
-	exit.MouseButton1Click:Connect(function()
-		WindowFunctions:Dialog({
-			Title = Settings.Title,
-			Description = "Are you sure you want to exit the menu? You will lose any unsaved configurations.",
-			Buttons = {
-				{
-					Name = "Confirm",
-					Callback = function()
-						WindowFunctions:Unload()
-					end,
-				},
-				{
-					Name = "Cancel"
-				}
-			}
-		})
-	end)
-
 	function WindowFunctions:SetKeybind(Keycode)
 		MenuKeybind = Keycode
 	end
@@ -6840,7 +6659,7 @@ function MacLib:Demo()
 	local Window = MacLib:Window({
 		Title = "Maclib Demo",
 		Subtitle = "This is a subtitle.",
-		Size = UDim2.fromOffset(868, 650),
+		Size = UDim2.fromOffset(600, 500),
 		DragStyle = 1,
 		DisabledWindowControls = {},
 		ShowUserInfo = true,
