@@ -97,25 +97,22 @@ function storeOriginalFrameSizes(guiObject)
 end
 
 function MacLib:changeUISize(scale)
-	local gui = macLib
-	if not gui then
-		return
-	end
+	if macLib then
+		storeOriginalFrameSizes(macLib)
 
-	storeOriginalFrameSizes(gui)
+		local baseSize = getBaseSize()
+		local widthScale = (baseSize.X * scale) / baseSize.X
+		local heightScale = (baseSize.Y * scale) / baseSize.Y
 
-	local baseSize = getBaseSize()
-	local widthScale = (baseSize.X * scale) / baseSize.X
-	local heightScale = (baseSize.Y * scale) / baseSize.Y
-
-	for frame, origSize in pairs(originalSizes) do
-		if frame.Parent then
-			frame.Size = UDim2.new(
-				origSize.X.Scale * scale,
-				math.floor(origSize.X.Offset * scale),
-				origSize.Y.Scale * scale,
-				math.floor(origSize.Y.Offset * scale)
-			)
+		for frame, origSize in pairs(originalSizes) do
+			if frame.Parent then
+				frame.Size = UDim2.new(
+					origSize.X.Scale * scale,
+					math.floor(origSize.X.Offset * scale),
+					origSize.Y.Scale * scale,
+					math.floor(origSize.Y.Offset * scale)
+				)
+			end
 		end
 	end
 end
@@ -237,40 +234,30 @@ function MacLib:Window(Settings)
 	end
 
 	local UICorner1 = Instance.new("UICorner")
+	local UICorner2 = Instance.new("UICorner")
 	local backgroundFrame = Instance.new("Frame")
-	local tempestButton = Instance.new("TextButton")
+	local tempestButton = Instance.new("ImageButton")
 	local UIPadding = Instance.new("UIPadding")
+
 	backgroundFrame.Name = "backgroundFrame"
 	backgroundFrame.Parent = macLib
 	backgroundFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 	backgroundFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-	backgroundFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 	backgroundFrame.BorderSizePixel = 0
-	backgroundFrame.Position = UDim2.new(0.98, 0, 0.5, 0)
+	backgroundFrame.Position = UDim2.new(0.97, 0, 0.5, 0)
 	backgroundFrame.Size = UDim2.new(0, 60, 0, 60)
-
+	
 	UICorner1.Parent = backgroundFrame
 
 	tempestButton.Name = "tempestButton"
 	tempestButton.Parent = backgroundFrame
 	tempestButton.AnchorPoint = Vector2.new(0.5, 0.5)
 	tempestButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-	tempestButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
 	tempestButton.BorderSizePixel = 0
 	tempestButton.Position = UDim2.new(0.5, 0, 0.5, 0)
 	tempestButton.Size = UDim2.new(1, 0, 1, 0)
-	tempestButton.Font = Enum.Font.PermanentMarker
-	tempestButton.Text = "Tempest Hub"
-	tempestButton.TextColor3 = Color3.fromRGB(75, 0, 130)
-	tempestButton.TextScaled = true
-	tempestButton.TextSize = 14
-	tempestButton.TextWrapped = true
-
-	UIPadding.Parent = backgroundFrame
-	UIPadding.PaddingTop = UDim.new(0.1, 0)
-	UIPadding.PaddingLeft = UDim.new(0.1, 0)
-	UIPadding.PaddingRight = UDim.new(0.1, 0)
-	UIPadding.PaddingBottom = UDim.new(0.1, 0)
+	tempestButton.Image = "http://www.roblox.com/asset/?id=119534847007535"
+	UICorner2.Parent = tempestButton
 
 	tempestButton.Activated:Connect(function()
 		local maclibGui = macLib
@@ -6770,6 +6757,18 @@ function MacLib:Demo()
 			print("Changed to ".. Value)
 		end
 	}, "Slider")
+	
+	sections.MainSection1:Slider({
+		Name = "Slider 2",
+		Default = 1,
+		Minimum = 0.5,
+		Maximum = 1.5,
+		DisplayMethod = "Value",
+		Precision = 1,
+		Callback = function(Value)
+			changeUISize(Value)
+		end
+	}, "Slider2")
 
 	sections.MainSection1:Toggle({
 		Name = "Toggle",
