@@ -73,6 +73,10 @@ end
 
 --// Library Functions
 local macLib = GetGui()
+local originalSizes = {}
+
+local pcSize2 = UDim2.fromOffset(850, 650)
+local mobileSize2 = UDim2.fromOffset(650, 400)
 
 function MacLib:HideUI(state)
 	if macLib then
@@ -88,24 +92,25 @@ function getBaseSize()
 	return isMobile() and mobileSize2 or pcSize2
 end
 
-function storeOriginalFrameSizes(guiObject)
-	for _, obj in ipairs(guiObject:GetDescendants()) do
-		if obj:IsA("Frame") and not originalSizes[obj] then
-			originalSizes[obj] = obj.Size
-		end
+local function storeOriginalFrameSizesRecursive(guiObject)
+	if guiObject:IsA("Frame") and not originalSizes[guiObject] then
+		originalSizes[guiObject] = guiObject.Size
+	end
+	for _, child in ipairs(guiObject:GetChildren()) do
+		storeOriginalFrameSizesRecursive(child)
 	end
 end
 
 function MacLib:changeUISize(scale)
 	if macLib then
-		storeOriginalFrameSizes(macLib)
+		if next(originalSizes) == nil then
+			storeOriginalFrameSizesRecursive(macLib)
+		end
 
 		local baseSize = getBaseSize()
-		local widthScale = (baseSize.X * scale) / baseSize.X
-		local heightScale = (baseSize.Y * scale) / baseSize.Y
 
 		for frame, origSize in pairs(originalSizes) do
-			if frame.Parent then
+			if frame and frame.Parent then
 				frame.Size = UDim2.new(
 					origSize.X.Scale * scale,
 					math.floor(origSize.X.Offset * scale),
