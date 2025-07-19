@@ -106,9 +106,7 @@ function MacLib:changeUISize(scale)
 		if next(originalSizes) == nil then
 			storeOriginalFrameSizesRecursive(macLib)
 		end
-
 		local baseSize = getBaseSize()
-
 		for frame, origSize in pairs(originalSizes) do
 			if frame and frame.Parent then
 				frame.Size = UDim2.new(
@@ -119,8 +117,23 @@ function MacLib:changeUISize(scale)
 				)
 			end
 		end
+
+		if macLib:FindFirstChild("Base") then
+			local baseFrame = macLib.Base
+			if not originalSizes[baseFrame] then
+				originalSizes[baseFrame] = baseFrame.Size
+			end
+			local origSize = originalSizes[baseFrame]
+			baseFrame.Size = UDim2.new(
+				origSize.X.Scale * scale,
+				math.floor(origSize.X.Offset * scale),
+				origSize.Y.Scale * scale,
+				math.floor(origSize.Y.Offset * scale)
+			)
+		end
 	end
 end
+
 
 function toggleBlackScreen(value)
 	local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
