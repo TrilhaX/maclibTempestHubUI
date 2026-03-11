@@ -102,36 +102,15 @@ local function storeOriginalFrameSizesRecursive(guiObject)
 end
 
 function MacLib:changeUISize(scale)
-	if macLib then
-		if next(originalSizes) == nil then
-			storeOriginalFrameSizesRecursive(macLib)
-		end
-		local baseSize = getBaseSize()
-		for frame, origSize in pairs(originalSizes) do
-			if frame and frame.Parent then
-				frame.Size = UDim2.new(
-					origSize.X.Scale * scale,
-					math.floor(origSize.X.Offset * scale),
-					origSize.Y.Scale * scale,
-					math.floor(origSize.Y.Offset * scale)
-				)
-			end
-		end
-
-		if macLib:FindFirstChild("Base") then
-			local baseFrame = macLib.Base
-			if not originalSizes[baseFrame] then
-				originalSizes[baseFrame] = baseFrame.Size
-			end
-			local origSize = originalSizes[baseFrame]
-			baseFrame.Size = UDim2.new(
-				origSize.X.Scale * scale,
-				math.floor(origSize.X.Offset * scale),
-				origSize.Y.Scale * scale,
-				math.floor(origSize.Y.Offset * scale)
-			)
-		end
-	end
+    if not macLib then return end
+    
+    local uiScale = macLib:FindFirstChild("MacLibScale")
+    if not uiScale then
+        uiScale = Instance.new("UIScale")
+        uiScale.Name = "MacLibScale"
+        uiScale.Parent = macLib
+    end
+    uiScale.Scale = scale
 end
 
 
@@ -355,9 +334,9 @@ function MacLib:Window(Settings)
 	local base = Instance.new("Frame")
 	base.Name = "Base"
 	base.AnchorPoint = Vector2.new(0.5, 0.5)
-	base.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+	base.BackgroundColor3 = Color3.fromRGB(90, 0, 90)
 	base.BackgroundTransparency = Settings.AcrylicBlur and 0.05 or 0
-	base.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	base.BorderColor3 = Color3.fromRGB(0,0,0)
 	base.BorderSizePixel = 0
 	base.Position = UDim2.fromScale(0.5, 0.5)
 	base.Size = Settings.Size or UDim2.fromOffset(868, 650)
@@ -402,7 +381,7 @@ function MacLib:Window(Settings)
 	if isMobile() then
 		dividerInteract.Name = "DividerInteract"
 		dividerInteract.AnchorPoint = Vector2.new(0.5, 0)
-		dividerInteract.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		dividerInteract.BackgroundColor3 = Color3.fromRGB(128, 0, 128)
 		dividerInteract.BackgroundTransparency = 1
 		dividerInteract.BorderColor3 = Color3.fromRGB(0, 0, 0)
 		dividerInteract.BorderSizePixel = 0
@@ -2245,7 +2224,6 @@ function MacLib:Window(Settings)
 						sliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
 						sliderValue.TextSize = 10
 						sliderValue.TextTransparency = 0.1
-						--sliderValue.TextTruncate = Enum.TextTruncate.AtEnd
 						sliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 						sliderValue.BackgroundTransparency = 0.95
 						sliderValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -2260,7 +2238,6 @@ function MacLib:Window(Settings)
 						sliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
 						sliderValue.TextSize = 12
 						sliderValue.TextTransparency = 0.1
-						--sliderValue.TextTruncate = Enum.TextTruncate.AtEnd
 						sliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 						sliderValue.BackgroundTransparency = 0.95
 						sliderValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -2309,7 +2286,7 @@ function MacLib:Window(Settings)
 					sliderBar.BorderColor3 = Color3.fromRGB(0, 0, 0)
 					sliderBar.BorderSizePixel = 0
 					sliderBar.Position = UDim2.fromScale(0.219, 0.457)
-					sliderBar.Size = UDim2.fromOffset(123, 3)
+					sliderBar.Size = UDim2.fromOffset(35, 3)
 
 					local sliderHead = Instance.new("ImageButton")
 					sliderHead.Name = "SliderHead"
@@ -2320,7 +2297,7 @@ function MacLib:Window(Settings)
 					sliderHead.BorderColor3 = Color3.fromRGB(0, 0, 0)
 					sliderHead.BorderSizePixel = 0
 					sliderHead.Position = UDim2.fromScale(1, 0.5)
-					sliderHead.Size = UDim2.fromOffset(12, 12)
+					sliderHead.Size = UDim2.fromOffset(6, 6)
 					sliderHead.Parent = sliderBar
 
 					sliderBar.Parent = sliderElements
@@ -6778,13 +6755,13 @@ function MacLib:Demo()
 	
 	sections.MainSection1:Slider({
 		Name = "Slider 2",
-		Default = 1,
+		Default = 0.75,
 		Minimum = 0.5,
 		Maximum = 1.5,
 		DisplayMethod = "Value",
 		Precision = 1,
 		Callback = function(Value)
-			changeUISize(Value)
+			MacLib:changeUISize(Value)
 		end
 	}, "Slider2")
 
