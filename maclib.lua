@@ -253,7 +253,7 @@ function MacLib:Window(Settings)
 	tempestButton.BorderSizePixel = 0
 	tempestButton.Position = UDim2.new(0.5, 0, 0.5, 0)
 	tempestButton.Size = UDim2.new(1, 0, 1, 0)
-	tempestButton.Image = "http://www.roblox.com/asset/?id=119534847007535"
+	tempestButton.Image = "http://www.roblox.com/asset/?id=100199291949935"
 	UICorner2.Parent = tempestButton
 
 	tempestButton.Activated:Connect(function()
@@ -6754,7 +6754,7 @@ function MacLib:Demo()
 	}, "Slider")
 	
 	sections.MainSection1:Slider({
-		Name = "Slider 2",
+		Name = "Change UI Size",
 		Default = 0.75,
 		Minimum = 0.5,
 		Maximum = 1.5,
@@ -6766,13 +6766,26 @@ function MacLib:Demo()
 	}, "Slider2")
 
 	sections.MainSection1:Toggle({
-		Name = "Toggle",
+		Name = "Blackscreen",
 		Default = false,
 		Callback = function(value)
-			Window:Notify({
-				Title = Window.Settings.Title,
-				Description = (value and "Enabled " or "Disabled ") .. "Toggle"
-			})
+			MacLib:lowCpuUsage(value)
+		end,
+	}, "Toggle")
+
+		sections.MainSection1:Toggle({
+		Name = "Hide Player Info",
+		Default = false,
+		Callback = function(value)
+			MacLib:HidePlayer(value)
+		end,
+	}, "Toggle")
+
+	sections.MainSection1:Toggle({
+		Name = "FPS Boost",
+		Default = false,
+		Callback = function(value)
+			MacLib:FPSBoost(value)
 		end,
 	}, "Toggle")
 
