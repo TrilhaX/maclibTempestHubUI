@@ -102,15 +102,17 @@ local function storeOriginalFrameSizesRecursive(guiObject)
 end
 
 function MacLib:changeUISize(scale)
-    if not macLib then return end
-    
-    local uiScale = macLib:FindFirstChild("MacLibScale")
-    if not uiScale then
-        uiScale = Instance.new("UIScale")
-        uiScale.Name = "MacLibScale"
-        uiScale.Parent = macLib
-    end
-    uiScale.Scale = scale
+	if macLib and macLib.Parent then
+		local uiScale = macLib:FindFirstChild("MacLibScale")
+
+		if not uiScale then
+			uiScale = Instance.new("UIScale")
+			uiScale.Name = "MacLibScale"
+			uiScale.Parent = macLib
+		end
+
+		uiScale.Scale = scale
+	end
 end
 
 
