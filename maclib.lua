@@ -123,6 +123,8 @@ function toggleBlackScreen(value)
 			screenGui.Name = "BlackScreenGui"
 			screenGui.ResetOnSpawn = false
 			screenGui.IgnoreGuiInset = true
+			screenGui.DisplayOrder = 999999
+			screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 			screenGui.Parent = playerGui
 
 			local frame = Instance.new("Frame")
@@ -131,6 +133,7 @@ function toggleBlackScreen(value)
 			frame.Size = UDim2.new(1, 0, 1, 0)
 			frame.BackgroundColor3 = Color3.new(0, 0, 0)
 			frame.BorderSizePixel = 0
+			frame.ZIndex = 999999
 			frame.Parent = screenGui
 		end
 	else
@@ -198,17 +201,17 @@ function HidePlayerFunction()
 	if character then
 		local head = character.Head
 		local humanoidrootpart = character.HumanoidRootPart
-		for i, v in pairs(head:GetChildren()) do
+		for i, v in pairs(head:GetDescendants()) do
 			if v.ClassName == "BillboardGui" or v.ClassName == "Decal" then
 				v:Destroy()
 			end
 		end
-		for i, v in pairs(humanoidrootpart:GetChildren()) do
+		for i, v in pairs(humanoidrootpart:GetDescendants()) do
 			if v.ClassName == "BillboardGui" or v.ClassName == "Decal" then
 				v:Destroy()
 			end
 		end
-		for _, obj in ipairs(character:GetChildren()) do
+		for _, obj in ipairs(character:GetDescendants()) do
 			if obj:IsA("Accessory") or obj:IsA("Shirt") or obj:IsA("Pants") then
 				obj:Destroy()
 			end
@@ -6644,7 +6647,7 @@ function MacLib:Demo()
 		Size = UDim2.fromOffset(600, 500),
 		DragStyle = 1,
 		DisabledWindowControls = {},
-		ShowUserInfo = true,
+		ShowUserInfo = false,
 		Keybind = Enum.KeyCode.RightControl,
 		AcrylicBlur = true,
 	})
