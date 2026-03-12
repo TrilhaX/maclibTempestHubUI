@@ -1343,14 +1343,12 @@ function MacLib:Window(Settings)
 			end
 			return
 		end
-		if DepthOfField then
-			if DepthOfField.Parent ~= Lighting then
-				pcall(function()
-					DepthOfField.Parent = Lighting
-				end)
-			end
-			DepthOfField.Enabled = true
+		if DepthOfField and DepthOfField.Parent ~= Lighting then
+			pcall(function()
+				DepthOfField.Parent = Lighting
+			end)
 		end
+		DepthOfField.Enabled = true
 		local properties = {
 			Transparency = 0.98;
 			BrickColor = BrickColor.new('Institutional white');
