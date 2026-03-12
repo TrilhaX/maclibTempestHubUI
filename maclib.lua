@@ -114,7 +114,6 @@ function MacLib:changeUISize(scale)
 		uiScale.Scale = scale
 	end
 end
-1
 
 function toggleBlackScreen(value)
 	local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
