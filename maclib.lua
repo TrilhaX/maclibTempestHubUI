@@ -114,7 +114,7 @@ function MacLib:changeUISize(scale)
 		uiScale.Scale = scale
 	end
 end
-
+1
 
 function toggleBlackScreen(value)
 	local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -1343,10 +1343,14 @@ function MacLib:Window(Settings)
 			end
 			return
 		end
-		if not DepthOfField.Parent then
-			DepthOfField.Parent = Lighting
+		if DepthOfField then
+			if DepthOfField.Parent ~= Lighting then
+				pcall(function()
+					DepthOfField.Parent = Lighting
+				end)
+			end
+			DepthOfField.Enabled = true
 		end
-		DepthOfField.Enabled = true
 		local properties = {
 			Transparency = 0.98;
 			BrickColor = BrickColor.new('Institutional white');
