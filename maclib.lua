@@ -42,6 +42,7 @@ local assets = {
 	colorWheel = "rbxassetid://2849458409",
 	colorTarget = "rbxassetid://73265255323268",
 	grid = "rbxassetid://121484455191370",
+	translate = "rbxassetid://108952102602834",
 	transform = "rbxassetid://90336395745819",
 	dropdown = "rbxassetid://18865373378",
 	sliderbar = "rbxassetid://18772615246",
@@ -258,6 +259,7 @@ function MacLib:Window(Settings)
 		customSidebarWidth = nil,
 		tabColumns = {},
 		floatPosition = nil,
+		translatorWidth = Settings.Translator == false and 0 or 64,
 	}
 
 	if Settings.AcrylicBlur ~= nil then
@@ -1168,9 +1170,575 @@ function MacLib:Window(Settings)
 	addMenuBars(menuButton, 18, 6, 0.4)
 
 	local closeButton = makeTopbarButton("CloseButton")
+	closeButton:SetAttribute("MacLibNoTranslate", true)
 	closeButton.AnchorPoint = Vector2.new(1, 0.5)
 	closeButton.Position = UDim2.new(1, 0, 0.5, 0)
 	closeButton.Text = "\u{2717}"
+
+
+	--// Tradutor da UI (canto superior direito)
+	-- Traduz os textos da UI com o Google Tradutor (HttpGet do executor). Os textos originais ficam guardados
+	-- e voltam ao escolher "English". Traducoes ficam em cache em arquivo para nao repetir pedidos.
+	local Translator = {
+		language = "en",
+		languages = {
+			{ code = "en", name = "English", short = "EN" },
+			{ code = "pt", name = "Português", short = "PT" },
+			{ code = "es", name = "Español", short = "ES" },
+			{ code = "ru", name = "Русский", short = "RU" },
+			{ code = "th", name = "ไทย", short = "TH" },
+			{ code = "vi", name = "Tiếng Việt", short = "VI" },
+			{ code = "id", name = "Bahasa Indonesia", short = "ID" },
+			{ code = "fi", name = "Suomi", short = "FI" },
+		},
+		cache = {},
+		tracked = setmetatable({}, { __mode = "k" }),
+		pending = {},
+		busy = false,
+	}
+	WindowFunctions.Translator = Translator
+
+	local TRANSLATOR_FOLDER = "MacLibTranslator"
+	for _, fixed in ipairs({ title, subtitle, displayName, username }) do
+		fixed:SetAttribute("MacLibNoTranslate", true)
+	end
+	local protectedTexts = {}
+	if Settings.Title then protectedTexts[Settings.Title] = true end
+	if Settings.Subtitle then protectedTexts[Settings.Subtitle] = true end
+
+	local function readFileSafe(path)
+		local ok, data = pcall(function()
+			if isfile and isfile(path) then
+				return readfile(path)
+			end
+		end)
+		return ok and data or nil
+	end
+
+	local function writeFileSafe(path, data)
+		pcall(function()
+			if not (writefile and makefolder and isfolder) then return end
+			if not isfolder(TRANSLATOR_FOLDER) then
+				makefolder(TRANSLATOR_FOLDER)
+			end
+			writefile(path, data)
+		end)
+	end
+
+	local function languageCache(code)
+		if not Translator.cache[code] then
+			local stored = {}
+			local raw = readFileSafe(TRANSLATOR_FOLDER .. "/" .. code .. ".json")
+			if raw then
+				local ok, decoded = pcall(HttpService.JSONDecode, HttpService, raw)
+				if ok and type(decoded) == "table" then
+					stored = decoded
+				end
+			end
+			Translator.cache[code] = stored
+		end
+		return Translator.cache[code]
+	end
+
+	local saveQueued = {}
+	local function saveCache(code)
+		if saveQueued[code] then return end
+		saveQueued[code] = true
+		task.delay(2, function()
+			saveQueued[code] = nil
+			local ok, encoded = pcall(HttpService.JSONEncode, HttpService, Translator.cache[code] or {})
+			if ok then
+				writeFileSafe(TRANSLATOR_FOLDER .. "/" .. code .. ".json", encoded)
+			end
+		end)
+	end
+
+	-- Parte do texto que deve ser traduzida. Dropdowns mostram "Nome • valores": so o nome e traduzido.
+	local function splitTranslatable(text)
+		local head, tail = text:match("^(.-)( • .*)$")
+		if head then
+			return head, tail
+		end
+		return text, ""
+	end
+
+	local function needsTranslation(text)
+		if type(text) ~= "string" or text == "" or #text > 1500 then return false end
+		if protectedTexts[text] then return false end
+		local plain = text:gsub("<[^>]->", "")
+		-- Pelo menos duas letras seguidas; numeros, simbolos e "✓" ficam como estao.
+		return plain:find("%a%a") ~= nil
+	end
+
+	local function escapeRichText(text)
+		return (text:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"))
+	end
+
+	local function requestTranslation(texts, code)
+		local joined = table.concat(texts, "\n")
+		local url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl="
+			.. code .. "&dt=t&q=" .. HttpService:UrlEncode(joined)
+
+		local okFetch, body = pcall(game.HttpGet, game, url)
+		if not okFetch or type(body) ~= "string" then return nil end
+
+		local okDecode, data = pcall(HttpService.JSONDecode, HttpService, body)
+		if not okDecode or type(data) ~= "table" or type(data[1]) ~= "table" then return nil end
+
+		local parts = {}
+		for _, segment in ipairs(data[1]) do
+			if type(segment) == "table" and type(segment[1]) == "string" then
+				table.insert(parts, segment[1])
+			end
+		end
+		local result = table.concat(parts)
+
+		if #texts == 1 then
+			return { result }
+		end
+
+		local lines = {}
+		for line in (result .. "\n"):gmatch("(.-)\n") do
+			table.insert(lines, (line:gsub("^%s+", ""):gsub("%s+$", "")))
+		end
+		if #lines ~= #texts then return nil end
+		return lines
+	end
+
+	local applyAll
+
+	local function translateQueue()
+		if Translator.busy then return end
+		Translator.busy = true
+		responsive.setTranslatorBusy(true)
+
+		while true do
+			local code = Translator.language
+			if code == "en" then break end
+			local cache = languageCache(code)
+
+			-- Monta lotes de ate ~1500 caracteres; textos com quebra de linha vao sozinhos.
+			local batch, size = {}, 0
+			for text in pairs(Translator.pending) do
+				if cache[text] then
+					Translator.pending[text] = nil
+				elseif text:find("\n") then
+					if #batch == 0 then
+						batch = { text }
+					end
+					break
+				elseif size + #text > 1500 and #batch > 0 then
+					break
+				else
+					table.insert(batch, text)
+					size += #text + 1
+				end
+			end
+			if #batch == 0 then break end
+
+			local result = requestTranslation(batch, code)
+			if not result and #batch > 1 then
+				-- O Google juntou ou separou linhas: tenta um por um.
+				result = {}
+				for i, text in ipairs(batch) do
+					local single = requestTranslation({ text }, code)
+					result[i] = single and single[1] or false
+				end
+			end
+
+			for i, text in ipairs(batch) do
+				Translator.pending[text] = nil
+				local translated = result and result[i]
+				if type(translated) == "string" and translated ~= "" then
+					cache[text] = translated
+				else
+					cache[text] = text -- falhou: mostra o original e nao tenta de novo nesta sessao
+				end
+			end
+
+			if Translator.language == code then
+				saveCache(code)
+				applyAll()
+			end
+			task.wait(0.2)
+		end
+
+		Translator.busy = false
+		responsive.setTranslatorBusy(false)
+	end
+
+	local function setTracked(inst, info, value)
+		info.lastSet = value
+		inst[info.property] = value
+	end
+
+	local function applyTo(inst, info)
+		if info.dynamic then return end
+
+		local original = info.original
+		if Translator.language == "en" or not needsTranslation(original) then
+			if inst[info.property] ~= original then
+				setTracked(inst, info, original)
+			end
+			return
+		end
+
+		local head, tail = splitTranslatable(original)
+		local plainHead = head:gsub("<[^>]->", "")
+		local translated = languageCache(Translator.language)[plainHead]
+		if translated then
+			if inst:IsA("TextLabel") or inst:IsA("TextButton") then
+				if inst.RichText then
+					translated = escapeRichText(translated)
+				end
+			end
+			setTracked(inst, info, translated .. tail)
+		else
+			Translator.pending[plainHead] = true
+			task.spawn(translateQueue)
+		end
+	end
+
+	applyAll = function()
+		for inst, info in pairs(Translator.tracked) do
+			if inst.Parent then
+				applyTo(inst, info)
+			end
+		end
+	end
+
+	local function isExcluded(inst)
+		local node = inst
+		while node and node ~= macLib do
+			if node:GetAttribute("MacLibNoTranslate") then
+				return true
+			end
+			node = node.Parent
+		end
+		return false
+	end
+
+	local function track(inst)
+		if Translator.tracked[inst] then return end
+		if not (inst:IsA("TextLabel") or inst:IsA("TextButton") or inst:IsA("TextBox")) then return end
+		if isExcluded(inst) then return end
+
+		-- Em caixas de texto so o placeholder e traduzido; o valor digitado nunca muda.
+		local property = inst:IsA("TextBox") and "PlaceholderText" or "Text"
+		local info = { property = property, original = inst[property], changes = {} }
+		Translator.tracked[inst] = info
+
+		inst:GetPropertyChangedSignal(property):Connect(function()
+			local value = inst[property]
+			if value == info.lastSet then return end
+
+			-- O script mudou o texto: esse passa a ser o novo original.
+			info.original = value
+			info.lastSet = nil
+
+			-- Textos que mudam toda hora (contadores, status) ficam no original para nao lotar o tradutor.
+			local now = os.clock()
+			table.insert(info.changes, now)
+			while info.changes[1] and now - info.changes[1] > 20 do
+				table.remove(info.changes, 1)
+			end
+			if #info.changes > 4 then
+				info.dynamic = true
+				return
+			end
+
+			if Translator.language ~= "en" then
+				applyTo(inst, info)
+			end
+		end)
+
+		if Translator.language ~= "en" then
+			applyTo(inst, info)
+		end
+	end
+
+	function Translator:SetLanguage(code)
+		local valid = false
+		for _, language in ipairs(self.languages) do
+			if language.code == code then
+				valid = true
+			end
+		end
+		if not valid then return end
+
+		self.language = code
+		self.pending = {}
+		writeFileSafe(TRANSLATOR_FOLDER .. "/language.txt", code)
+		responsive.updateTranslatorButton()
+
+		applyAll()
+	end
+
+	function Translator:GetLanguage()
+		return self.language
+	end
+
+	function WindowFunctions:SetLanguage(code)
+		Translator:SetLanguage(code)
+	end
+	function WindowFunctions:GetLanguage()
+		return Translator.language
+	end
+
+	-- Botao no canto superior direito
+	local translatorButton = Instance.new("TextButton")
+	translatorButton.Name = "TranslatorButton"
+	translatorButton:SetAttribute("MacLibNoTranslate", true)
+	translatorButton.AnchorPoint = Vector2.new(1, 0.5)
+	translatorButton.AutoButtonColor = false
+	translatorButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	translatorButton.BackgroundTransparency = 0.96
+	translatorButton.BorderSizePixel = 0
+	translatorButton.Position = UDim2.new(1, 0, 0.5, 0)
+	translatorButton.Size = UDim2.fromOffset(responsive.translatorWidth, TOUCH_UI and 32 or 28)
+	translatorButton.Text = ""
+	translatorButton.Visible = Settings.Translator ~= false
+	translatorButton.Parent = elements
+
+	local translatorButtonCorner = Instance.new("UICorner")
+	translatorButtonCorner.CornerRadius = UDim.new(0, 6)
+	translatorButtonCorner.Parent = translatorButton
+
+	local translatorButtonStroke = Instance.new("UIStroke")
+	translatorButtonStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	translatorButtonStroke.Color = Color3.fromRGB(255, 255, 255)
+	translatorButtonStroke.Transparency = 0.9
+	translatorButtonStroke.Parent = translatorButton
+
+	local translatorButtonLayout = Instance.new("UIListLayout")
+	translatorButtonLayout.FillDirection = Enum.FillDirection.Horizontal
+	translatorButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	translatorButtonLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+	translatorButtonLayout.Padding = UDim.new(0, 6)
+	translatorButtonLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	translatorButtonLayout.Parent = translatorButton
+
+	local translatorIcon = Instance.new("ImageLabel")
+	translatorIcon.Name = "Icon"
+	translatorIcon.BackgroundTransparency = 1
+	translatorIcon.Image = assets.translate
+	translatorIcon.ImageTransparency = 0.4
+	translatorIcon.Size = UDim2.fromOffset(14, 14)
+	translatorIcon.Parent = translatorButton
+
+	local translatorLabel = Instance.new("TextLabel")
+	translatorLabel.Name = "Language"
+	translatorLabel.AutomaticSize = Enum.AutomaticSize.X
+	translatorLabel.BackgroundTransparency = 1
+	translatorLabel.FontFace = Font.new(assets.interFont, Enum.FontWeight.Medium, Enum.FontStyle.Normal)
+	translatorLabel.LayoutOrder = 1
+	translatorLabel.Size = UDim2.fromOffset(0, 14)
+	translatorLabel.Text = "EN"
+	translatorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	translatorLabel.TextSize = 12
+	translatorLabel.TextTransparency = 0.3
+	translatorLabel.Parent = translatorButton
+
+	function responsive.placeTranslator(offsetX)
+		translatorButton.Position = UDim2.new(1, offsetX, 0.5, 0)
+	end
+
+	function responsive.setTranslatorBusy(state)
+		Tween(translatorIcon, TweenInfo.new(0.2, Enum.EasingStyle.Sine), {
+			ImageTransparency = state and 0.8 or 0.4
+		}):Play()
+	end
+
+	translatorButton.MouseEnter:Connect(function()
+		Tween(translatorButton, TweenInfo.new(0.2, Enum.EasingStyle.Sine), { BackgroundTransparency = 0.92 }):Play()
+	end)
+	translatorButton.MouseLeave:Connect(function()
+		Tween(translatorButton, TweenInfo.new(0.2, Enum.EasingStyle.Sine), { BackgroundTransparency = 0.96 }):Play()
+	end)
+
+	-- Lista de idiomas
+	local languageMenu = Instance.new("ScrollingFrame")
+	languageMenu.Name = "LanguageMenu"
+	languageMenu:SetAttribute("MacLibNoTranslate", true)
+	languageMenu.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	languageMenu.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+	languageMenu.BorderSizePixel = 0
+	languageMenu.BottomImage = ""
+	languageMenu.CanvasSize = UDim2.new()
+	languageMenu.ScrollBarImageTransparency = 0.6
+	languageMenu.ScrollBarThickness = 3
+	languageMenu.ScrollingDirection = Enum.ScrollingDirection.Y
+	languageMenu.TopImage = ""
+	languageMenu.Visible = false
+	languageMenu.ZIndex = 8
+	languageMenu.Parent = base
+
+	local languageMenuCorner = Instance.new("UICorner")
+	languageMenuCorner.CornerRadius = UDim.new(0, 8)
+	languageMenuCorner.Parent = languageMenu
+
+	local languageMenuStroke = Instance.new("UIStroke")
+	languageMenuStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	languageMenuStroke.Color = Color3.fromRGB(255, 255, 255)
+	languageMenuStroke.Transparency = 0.9
+	languageMenuStroke.Parent = languageMenu
+
+	local languageMenuPadding = Instance.new("UIPadding")
+	languageMenuPadding.PaddingTop = UDim.new(0, 6)
+	languageMenuPadding.PaddingBottom = UDim.new(0, 6)
+	languageMenuPadding.PaddingLeft = UDim.new(0, 6)
+	languageMenuPadding.PaddingRight = UDim.new(0, 6)
+	languageMenuPadding.Parent = languageMenu
+
+	local languageMenuLayout = Instance.new("UIListLayout")
+	languageMenuLayout.Padding = UDim.new(0, 2)
+	languageMenuLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	languageMenuLayout.Parent = languageMenu
+
+	local LANGUAGE_ROW = TOUCH_UI and 38 or 30
+	local LANGUAGE_MENU_WIDTH = 180
+	local languageRows = {}
+
+	local function closeLanguageMenu()
+		languageMenu.Visible = false
+	end
+	responsive.closeLanguageMenu = closeLanguageMenu
+
+	for index, language in ipairs(Translator.languages) do
+		local row = Instance.new("TextButton")
+		row.Name = language.code
+		row.AutoButtonColor = false
+		row.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		row.BackgroundTransparency = 1
+		row.BorderSizePixel = 0
+		row.FontFace = Font.new(assets.interFont)
+		row.LayoutOrder = index
+		row.Size = UDim2.new(1, 0, 0, LANGUAGE_ROW)
+		row.Text = language.name
+		row.TextColor3 = Color3.fromRGB(255, 255, 255)
+		row.TextSize = 13
+		row.TextTransparency = 0.4
+		row.TextXAlignment = Enum.TextXAlignment.Left
+		row.ZIndex = 9
+		row.Parent = languageMenu
+
+		local rowCorner = Instance.new("UICorner")
+		rowCorner.CornerRadius = UDim.new(0, 6)
+		rowCorner.Parent = row
+
+		local rowPadding = Instance.new("UIPadding")
+		rowPadding.PaddingLeft = UDim.new(0, 10)
+		rowPadding.PaddingRight = UDim.new(0, 10)
+		rowPadding.Parent = row
+
+		local check = Instance.new("TextLabel")
+		check.Name = "Check"
+		check.AnchorPoint = Vector2.new(1, 0.5)
+		check.BackgroundTransparency = 1
+		check.FontFace = Font.new(assets.interFont)
+		check.Position = UDim2.new(1, 0, 0.5, 0)
+		check.Size = UDim2.fromOffset(16, 16)
+		check.Text = "\u{2713}"
+		check.TextColor3 = Color3.fromRGB(255, 255, 255)
+		check.TextSize = 13
+		check.TextTransparency = 0.2
+		check.Visible = false
+		check.ZIndex = 9
+		check.Parent = row
+
+		row.MouseEnter:Connect(function()
+			row.BackgroundTransparency = 0.95
+		end)
+		row.MouseLeave:Connect(function()
+			row.BackgroundTransparency = 1
+		end)
+		row.MouseButton1Click:Connect(function()
+			closeLanguageMenu()
+			Translator:SetLanguage(language.code)
+		end)
+
+		languageRows[language.code] = { row = row, check = check }
+	end
+
+	function responsive.updateTranslatorButton()
+		for _, language in ipairs(Translator.languages) do
+			local entry = languageRows[language.code]
+			local selected = language.code == Translator.language
+			entry.check.Visible = selected
+			entry.row.TextTransparency = selected and 0.1 or 0.4
+			if selected then
+				translatorLabel.Text = language.short
+			end
+		end
+	end
+
+	local function openLanguageMenu()
+		local scale = math.max(baseUIScale.Scale, 0.01)
+		local buttonTopLeft = (translatorButton.AbsolutePosition - base.AbsolutePosition) / scale
+		local buttonSize = translatorButton.AbsoluteSize / scale
+		local top = buttonTopLeft.Y + buttonSize.Y + 6
+		local contentHeight = #Translator.languages * (LANGUAGE_ROW + 2) + 12
+		local height = math.min(contentHeight, responsive.height - top - 8)
+		local right = buttonTopLeft.X + buttonSize.X
+		local left = math.clamp(right - LANGUAGE_MENU_WIDTH, 8, math.max(8, responsive.width - LANGUAGE_MENU_WIDTH - 8))
+
+		responsive.setDrawer(false)
+		languageMenu.Position = UDim2.fromOffset(left, top)
+		languageMenu.Size = UDim2.fromOffset(LANGUAGE_MENU_WIDTH, math.max(height, LANGUAGE_ROW + 12))
+		languageMenu.CanvasPosition = Vector2.zero
+		languageMenu.Visible = true
+	end
+
+	translatorButton.MouseButton1Click:Connect(function()
+		if languageMenu.Visible then
+			closeLanguageMenu()
+		else
+			openLanguageMenu()
+		end
+	end)
+
+	-- Fecha ao tocar/clicar fora da lista
+	UserInputService.InputBegan:Connect(function(input)
+		if not languageMenu.Visible then return end
+		if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+
+		local position = Vector2.new(input.Position.X, input.Position.Y)
+		local function inside(gui)
+			local topLeft = gui.AbsolutePosition
+			local bottomRight = topLeft + gui.AbsoluteSize
+			return position.X >= topLeft.X and position.X <= bottomRight.X and position.Y >= topLeft.Y and position.Y <= bottomRight.Y
+		end
+		if not inside(languageMenu) and not inside(translatorButton) then
+			closeLanguageMenu()
+		end
+	end)
+
+	-- Acompanha todos os textos da UI, inclusive abas, elementos e notificacoes criados depois.
+	macLib.DescendantAdded:Connect(function(descendant)
+		task.defer(function()
+			if descendant.Parent then
+				track(descendant)
+				for _, child in ipairs(descendant:GetDescendants()) do
+					track(child)
+				end
+			end
+		end)
+	end)
+	for _, descendant in ipairs(macLib:GetDescendants()) do
+		track(descendant)
+	end
+
+	do
+		local saved = readFileSafe(TRANSLATOR_FOLDER .. "/language.txt")
+		local initial = Settings.Language or (saved and saved:gsub("%s", "")) or "en"
+		Translator.language = "en"
+		responsive.updateTranslatorButton()
+		if initial ~= "en" then
+			task.defer(function()
+				Translator:SetLanguage(initial)
+			end)
+		end
+	end
 
 	local drawerScrim = Instance.new("TextButton")
 	drawerScrim.Name = "DrawerScrim"
@@ -1297,7 +1865,10 @@ function MacLib:Window(Settings)
 			uIPadding2.PaddingLeft = UDim.new(0, 12)
 			uIPadding2.PaddingRight = UDim.new(0, 12)
 			currentTab.Position = UDim2.new(0, 44, 0.5, 0)
-			currentTab.Size = UDim2.new(1, -88, 0, 0)
+			currentTab.Size = UDim2.new(1, -(88 + responsive.translatorWidth), 0, 0)
+			if responsive.placeTranslator then
+				responsive.placeTranslator(-44)
+			end
 			globalSettings.Position = UDim2.fromOffset(12, 70)
 
 			if not wasCompact then
@@ -1328,7 +1899,10 @@ function MacLib:Window(Settings)
 			uIPadding2.PaddingLeft = UDim.new(0, 20)
 			uIPadding2.PaddingRight = UDim.new(0, 20)
 			currentTab.Position = UDim2.fromScale(0, 0.5)
-			currentTab.Size = UDim2.fromScale(0.9, 0)
+			currentTab.Size = UDim2.new(1, -(responsive.translatorWidth + 12), 0, 0)
+			if responsive.placeTranslator then
+				responsive.placeTranslator(0)
+			end
 			globalSettings.Position = UDim2.fromScale(0.298, 0.104)
 		end
 
@@ -1346,6 +1920,7 @@ function MacLib:Window(Settings)
 		windowState = base.Visible
 		if not base.Visible then
 			setDrawer(false, true)
+			responsive.closeLanguageMenu()
 		end
 		updateFloatingButton()
 	end)
@@ -3369,6 +3944,7 @@ function MacLib:Window(Settings)
 
 						local optionName = Instance.new("TextLabel")
 						optionName.Name = "OptionName"
+						optionName:SetAttribute("MacLibNoTranslate", true) -- valores do jogo (mapas, unidades)
 						optionName.FontFace = Font.new(assets.interFont)
 						optionName.Text = v
 						optionName.RichText = true
@@ -6484,6 +7060,90 @@ function MacLib:Demo()
 
 	sections.MainSection1:SubLabel({
 		Text = "Sub-Label. Lorem ipsum odor amet, consectetuer adipiscing elit."
+	})
+
+	-- Tradutor: o botao fica no canto superior direito; esta secao mostra o mesmo recurso pelo script.
+	local translatorSection = tabs.Main:Section({ Side = "Right" })
+
+	translatorSection:Header({
+		Name = "Translator"
+	})
+
+	translatorSection:Paragraph({
+		Header = "Translate the whole UI",
+		Body = "Use the language button in the top-right corner, or pick a language below. Tabs, toggles, sliders, notifications and descriptions are translated; option values and your name stay as they are."
+	})
+
+	local languageNames, languageCodes = {}, {}
+	for _, language in ipairs(Window.Translator.languages) do
+		table.insert(languageNames, language.name)
+		languageCodes[language.name] = language.code
+	end
+
+	translatorSection:Dropdown({
+		Name = "Language",
+		Search = false,
+		Multi = false,
+		Required = true,
+		Options = languageNames,
+		Default = 1,
+		Callback = function(name)
+			if name and languageCodes[name] then
+				Window:SetLanguage(languageCodes[name])
+			end
+		end,
+	})
+
+	translatorSection:Button({
+		Name = "Show a translated notification",
+		Callback = function()
+			Window:Notify({
+				Title = Window.Settings.Title,
+				Description = "This notification follows the language you picked.",
+				Lifetime = 5
+			})
+		end,
+	})
+
+	-- Sliders com nomes curtos e longos para ver o layout responsivo.
+	local layoutSection = tabs.Main:Section({ Side = "Right" })
+
+	layoutSection:Header({
+		Name = "Responsive sliders"
+	})
+
+	for _, info in ipairs({
+		{ "Rare Chest", 10 },
+		{ "Chest", 9 },
+		{ "Shop", 6 },
+		{ "Boss", 1 },
+	}) do
+		layoutSection:Slider({
+			Name = info[1],
+			Default = info[2],
+			Minimum = 0,
+			Maximum = 10,
+			DisplayMethod = "Round",
+			Callback = function() end,
+		})
+	end
+
+	local longSection = tabs.Main:Section({ Side = "Right" })
+
+	longSection:Slider({
+		Name = "Lag Switch duration (0 = until turned off)",
+		Default = 0,
+		Minimum = 0,
+		Maximum = 30,
+		DisplayMethod = "Round",
+		Callback = function() end,
+	})
+
+	longSection:Input({
+		Name = "Leave if fewer than X players",
+		Placeholder = "Press enter after paste",
+		AcceptedCharacters = "Numeric",
+		Callback = function() end,
 	})
 
 	MacLib:SetFolder("Maclib")
