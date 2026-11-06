@@ -41,7 +41,6 @@ local assets = {
 	colorWheel = "rbxassetid://2849458409",
 	colorTarget = "rbxassetid://73265255323268",
 	grid = "rbxassetid://121484455191370",
-	globe = "rbxassetid://108952102602834",
 	transform = "rbxassetid://90336395745819",
 	dropdown = "rbxassetid://18865373378",
 	sliderbar = "rbxassetid://18772615246",
@@ -373,7 +372,7 @@ function MacLib:Window(Settings)
 	base.BorderColor3 = Color3.fromRGB(0,0,0)
 	base.BorderSizePixel = 0
 	base.Position = UDim2.fromScale(0.5, 0.5)
-	base.Size = Settings.Size or UDim2.fromOffset(868, 650)
+	base.Size = Settings.Size or UDim2.fromOffset(600, 500)
 	responsive.designSize = base.Size
 
 	local baseUIScale = Instance.new("UIScale")
@@ -489,10 +488,28 @@ function MacLib:Window(Settings)
 	informationHolderUIPadding.PaddingTop = UDim.new(0, 10)
 	informationHolderUIPadding.Parent = informationHolder
 
+	-- Icone de menu desenhado com Frames: nao depende de asset nem de glifo da fonte.
+	local function addMenuBars(button, barWidth, gap, transparency)
+		local bars = {}
+		for line = 0, 2 do
+			local bar = Instance.new("Frame")
+			bar.Name = "MenuBar"
+			bar.AnchorPoint = Vector2.new(0.5, 0.5)
+			bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			bar.BackgroundTransparency = transparency
+			bar.BorderSizePixel = 0
+			bar.Position = UDim2.new(0.5, 0, 0.5, (line - 1) * gap)
+			bar.Size = UDim2.fromOffset(barWidth, 2)
+			bar.Parent = button
+			table.insert(bars, bar)
+		end
+		return bars
+	end
+
 	local globalSettingsButton = Instance.new("ImageButton")
 	globalSettingsButton.Name = "GlobalSettingsButton"
-	globalSettingsButton.Image = assets.globe
-	globalSettingsButton.ImageTransparency = 0.5
+	globalSettingsButton.Image = ""
+	globalSettingsButton.ImageTransparency = 1
 	globalSettingsButton.AnchorPoint = Vector2.new(1, 0.5)
 	globalSettingsButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	globalSettingsButton.BackgroundTransparency = 1
@@ -501,6 +518,8 @@ function MacLib:Window(Settings)
 	globalSettingsButton.Position = UDim2.fromScale(1, 0.5)
 	globalSettingsButton.Size = UDim2.fromOffset(16,16)
 	globalSettingsButton.Parent = informationHolder
+
+	local globalSettingsBars = addMenuBars(globalSettingsButton, 14, 5, 0.5)
 
 	local globalSettingsHitArea
 	if TOUCH_UI then
@@ -515,13 +534,9 @@ function MacLib:Window(Settings)
 	end
 
 	local function ChangeGlobalSettingsButtonState(State)
-		if State == "Default" then
-			Tween(globalSettingsButton, TweenInfo.new(0.2, Enum.EasingStyle.Sine), {
-				ImageTransparency = 0.5
-			}):Play()
-		elseif State == "Hover" then
-			Tween(globalSettingsButton, TweenInfo.new(0.2, Enum.EasingStyle.Sine), {
-				ImageTransparency = 0.3
+		for _, bar in ipairs(globalSettingsBars) do
+			Tween(bar, TweenInfo.new(0.2, Enum.EasingStyle.Sine), {
+				BackgroundTransparency = State == "Hover" and 0.3 or 0.5
 			}):Play()
 		end
 	end
@@ -1065,8 +1080,9 @@ function MacLib:Window(Settings)
 	--// Layout responsivo
 	local WINDOW_MARGIN = 8
 	local MIN_WINDOW_SIZE = Vector2.new(340, 300)
-	local COMPACT_WIDTH = 640 -- abaixo disso a sidebar vira gaveta
-	local SINGLE_COLUMN_WIDTH = 480 -- abaixo disso as secoes ficam em uma coluna
+	-- No PC a janela de 600x500 da Demo mantem sidebar fixa e duas colunas.
+	local COMPACT_WIDTH = TOUCH_UI and 640 or 480 -- abaixo disso a sidebar vira gaveta
+	local SINGLE_COLUMN_WIDTH = TOUCH_UI and 480 or 360 -- abaixo disso as secoes ficam em uma coluna
 	local SHORT_HEIGHT = 430 -- abaixo disso o card de usuario sai para sobrar espaco para as abas
 	local DRAWER_MAX_WIDTH = 260
 	local TOPBAR_HEIGHT = 63
@@ -1125,16 +1141,7 @@ function MacLib:Window(Settings)
 	end
 
 	local menuButton = makeTopbarButton("MenuButton")
-	for line = 0, 2 do
-		local bar = Instance.new("Frame")
-		bar.AnchorPoint = Vector2.new(0.5, 0.5)
-		bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		bar.BackgroundTransparency = 0.4
-		bar.BorderSizePixel = 0
-		bar.Position = UDim2.new(0.5, 0, 0.5, (line - 1) * 6)
-		bar.Size = UDim2.fromOffset(18, 2)
-		bar.Parent = menuButton
-	end
+	addMenuBars(menuButton, 18, 6, 0.4)
 
 	local closeButton = makeTopbarButton("CloseButton")
 	closeButton.AnchorPoint = Vector2.new(1, 0.5)
@@ -5846,7 +5853,7 @@ function MacLib:Window(Settings)
 	if Settings.ShowUserInfo ~= nil then
 		showUserInfo = Settings.ShowUserInfo
 	else
-		showUserInfo = true
+		showUserInfo = false
 	end
 
 	_SetUserInfoState(showUserInfo)
@@ -6404,4 +6411,4 @@ function MacLib:Demo()
 	MacLib:LoadAutoLoadConfig()
 end
 
-return MacLib
+return MacLib
