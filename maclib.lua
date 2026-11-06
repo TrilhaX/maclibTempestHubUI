@@ -14,6 +14,7 @@ local ContentProvider = MacLib.GetService("ContentProvider")
 local UserInputService = MacLib.GetService("UserInputService")
 local Lighting = MacLib.GetService("Lighting")
 local Players = MacLib.GetService("Players")
+local TextService = MacLib.GetService("TextService")
 
 --// Variables
 local isStudio = RunService:IsStudio()
@@ -69,6 +70,29 @@ local function GetGui()
 	newGui.Name = "MaclibGui"
 
 	return newGui
+end
+
+-- Largura do texto em pixels (sem escala). Usada para decidir se um nome cabe na mesma linha do controle.
+local textWidthCache = {}
+local function measureText(text, size)
+	local plain = tostring(text or ""):gsub("<[^>]->", "")
+	local key = size .. "|" .. plain
+	if textWidthCache[key] then
+		return textWidthCache[key]
+	end
+
+	local ok, bounds = pcall(function()
+		local params = Instance.new("GetTextBoundsParams")
+		params.Text = plain
+		params.Font = Font.new("rbxassetid://12187365364")
+		params.Size = size
+		params.Width = 100000
+		return TextService:GetTextBoundsAsync(params)
+	end)
+
+	local width = (ok and bounds) and bounds.X or #plain * size * 0.56
+	textWidthCache[key] = width
+	return width
 end
 
 local function Tween(instance, tweeninfo, propertytable)
@@ -2013,6 +2037,59 @@ function MacLib:Window(Settings)
 				section.ClipsDescendants = true
 				section.Parent = Settings.Side == "Left" and left or right
 
+				-- Os sliders de uma secao usam o mesmo layout e as mesmas colunas, para as barras ficarem alinhadas.
+				local sliderGroup = { items = {} }
+				local SLIDER_GAP = 12
+				local MIN_INLINE_BAR = 70
+
+				function sliderGroup.layout()
+					local rowWidth = 0
+					local valueWidth = 44
+					for _, item in ipairs(sliderGroup.items) do
+						rowWidth = math.max(rowWidth, item.row.AbsoluteSize.X / math.max(baseUIScale.Scale, 0.01))
+						valueWidth = math.max(valueWidth, item.valueWidth)
+					end
+					if rowWidth < 1 then return end
+
+					local barWidth = math.clamp(math.floor(rowWidth * 0.42), MIN_INLINE_BAR, 200)
+					local nameRoom = rowWidth - valueWidth - barWidth - SLIDER_GAP * 2
+					local inline = nameRoom > 0
+					for _, item in ipairs(sliderGroup.items) do
+						if measureText(item.name.Text, 12) > nameRoom then
+							inline = false
+							break
+						end
+					end
+
+					for _, item in ipairs(sliderGroup.items) do
+						item.value.Size = UDim2.fromOffset(valueWidth, 22)
+						item.value.AnchorPoint = Vector2.new(1, 0.5)
+
+						if inline then
+							item.row.Size = UDim2.new(1, 0, 0, 38)
+							item.name.Position = UDim2.new(0, 0, 0.5, 0)
+							item.name.Size = UDim2.new(0, nameRoom, 0, 16)
+							item.value.Position = UDim2.new(1, 0, 0.5, 0)
+							item.bar.AnchorPoint = Vector2.new(1, 0.5)
+							item.bar.Position = UDim2.new(1, -(valueWidth + SLIDER_GAP), 0.5, 0)
+							item.bar.Size = UDim2.fromOffset(barWidth, 3)
+						else
+							item.row.Size = UDim2.new(1, 0, 0, 50)
+							item.name.Position = UDim2.new(0, 0, 0, 12)
+							item.name.Size = UDim2.new(1, -(valueWidth + SLIDER_GAP), 0, 16)
+							item.value.Position = UDim2.new(1, 0, 0, 12)
+							item.bar.AnchorPoint = Vector2.new(0, 0.5)
+							item.bar.Position = UDim2.new(0, 5, 0, 38)
+							item.bar.Size = UDim2.new(1, -10, 0, 3)
+						end
+					end
+					sliderGroup.inline = inline
+				end
+
+				function sliderGroup.queue()
+					task.spawn(sliderGroup.layout)
+				end
+
 				local sectionUICorner = Instance.new("UICorner")
 				sectionUICorner.Name = "SectionUICorner"
 				sectionUICorner.Parent = section
@@ -2286,7 +2363,6 @@ function MacLib:Window(Settings)
 					local SliderFunctions = { Settings = Settings, IgnoreConfig = false, Class = "Slider" }
 					local slider = Instance.new("Frame")
 					slider.Name = "Slider"
-					slider.AutomaticSize = Enum.AutomaticSize.Y
 					slider.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 					slider.BackgroundTransparency = 1
 					slider.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -2304,25 +2380,15 @@ function MacLib:Window(Settings)
 					sliderName.TextTransparency = 0.5
 					sliderName.TextTruncate = Enum.TextTruncate.AtEnd
 					sliderName.TextXAlignment = Enum.TextXAlignment.Left
-					sliderName.TextYAlignment = Enum.TextYAlignment.Top
+					sliderName.TextYAlignment = Enum.TextYAlignment.Center
 					sliderName.AnchorPoint = Vector2.new(0, 0.5)
-					sliderName.AutomaticSize = Enum.AutomaticSize.XY
+					sliderName.Size = UDim2.new(1, 0, 0, 16)
 					sliderName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 					sliderName.BackgroundTransparency = 1
 					sliderName.BorderColor3 = Color3.fromRGB(0, 0, 0)
 					sliderName.BorderSizePixel = 0
 					sliderName.Position = UDim2.fromScale(1.3e-07, 0.5)
 					sliderName.Parent = slider
-
-					local sliderElements = Instance.new("Frame")
-					sliderElements.Name = "SliderElements"
-					sliderElements.AnchorPoint = Vector2.new(1, 0)
-					sliderElements.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					sliderElements.BackgroundTransparency = 1
-					sliderElements.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					sliderElements.BorderSizePixel = 0
-					sliderElements.Position = UDim2.fromScale(1, 0)
-					sliderElements.Size = UDim2.fromScale(1, 1)
 
 					local sliderValue = Instance.new("TextBox")
 					sliderValue.Name = "SliderValue"
@@ -2334,9 +2400,9 @@ function MacLib:Window(Settings)
 					sliderValue.BackgroundTransparency = 0.95
 					sliderValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
 					sliderValue.BorderSizePixel = 0
-					sliderValue.LayoutOrder = 1
-					sliderValue.Position = UDim2.fromScale(-0.0789, 0.171)
-					sliderValue.Size = UDim2.fromOffset(41, 21)
+					sliderValue.AnchorPoint = Vector2.new(1, 0.5)
+					sliderValue.Position = UDim2.new(1, 0, 0.5, 0)
+					sliderValue.Size = UDim2.fromOffset(44, 22)
 					sliderValue.ClipsDescendants = true
 
 					local sliderValueUICorner = Instance.new("UICorner")
@@ -2357,16 +2423,7 @@ function MacLib:Window(Settings)
 					sliderValueUIPadding.PaddingRight = UDim.new(0, 2)
 					sliderValueUIPadding.Parent = sliderValue
 
-					sliderValue.Parent = sliderElements
-
-					local sliderElementsUIListLayout = Instance.new("UIListLayout")
-					sliderElementsUIListLayout.Name = "SliderElementsUIListLayout"
-					sliderElementsUIListLayout.Padding = UDim.new(0, 20)
-					sliderElementsUIListLayout.FillDirection = Enum.FillDirection.Horizontal
-					sliderElementsUIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-					sliderElementsUIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-					sliderElementsUIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-					sliderElementsUIListLayout.Parent = sliderElements
+					sliderValue.Parent = slider
 
 					local sliderBar = Instance.new("ImageLabel")
 					sliderBar.Name = "SliderBar"
@@ -2376,8 +2433,8 @@ function MacLib:Window(Settings)
 					sliderBar.BackgroundTransparency = 1
 					sliderBar.BorderColor3 = Color3.fromRGB(0, 0, 0)
 					sliderBar.BorderSizePixel = 0
-					sliderBar.Position = UDim2.fromScale(0.219, 0.457)
-					sliderBar.Size = UDim2.fromOffset(35, 3)
+					sliderBar.AnchorPoint = Vector2.new(1, 0.5)
+					sliderBar.Size = UDim2.fromOffset(100, 3)
 
 					local sliderHead = Instance.new("ImageButton")
 					sliderHead.Name = "SliderHead"
@@ -2388,17 +2445,10 @@ function MacLib:Window(Settings)
 					sliderHead.BorderColor3 = Color3.fromRGB(0, 0, 0)
 					sliderHead.BorderSizePixel = 0
 					sliderHead.Position = UDim2.fromScale(1, 0.5)
-					sliderHead.Size = UDim2.fromOffset(6, 6)
+					sliderHead.Size = UDim2.fromOffset(TOUCH_UI and 10 or 8, TOUCH_UI and 10 or 8)
 					sliderHead.Parent = sliderBar
 
-					sliderBar.Parent = sliderElements
-
-					local sliderElementsUIPadding = Instance.new("UIPadding")
-					sliderElementsUIPadding.Name = "SliderElementsUIPadding"
-					sliderElementsUIPadding.PaddingTop = UDim.new(0, 3)
-					sliderElementsUIPadding.Parent = sliderElements
-
-					sliderElements.Parent = slider
+					sliderBar.Parent = slider
 
 					local dragging = false
 
@@ -2551,23 +2601,26 @@ function MacLib:Window(Settings)
 						end
 					end)
 
-					local function updateSliderBarSize()
-						local padding = sliderElementsUIListLayout.Padding.Offset
-						local sliderValueWidth = sliderValue.AbsoluteSize.X
-						local sliderNameWidth = sliderName.AbsoluteSize.X
-						local totalWidth = sliderElements.AbsoluteSize.X
-
-						local newBarWidth = math.max((totalWidth - (padding + sliderValueWidth + sliderNameWidth + 20)) / baseUIScale.Scale, 40)
-						sliderBar.Size = UDim2.new(sliderBar.Size.X.Scale, newBarWidth, sliderBar.Size.Y.Scale, sliderBar.Size.Y.Offset)
+					-- Largura da caixa de valor: cabe o maior numero possivel deste slider.
+					local valueWidth
+					do
+						local function formatted(v)
+							return (Settings.Prefix or "") .. ValueDisplayMethod(v, SliderFunctions.Settings.Precision) .. (Settings.Suffix or "")
+						end
+						local widest = math.max(
+							measureText(formatted(SliderFunctions.Settings.Minimum), 12),
+							measureText(formatted(SliderFunctions.Settings.Maximum), 12)
+						)
+						valueWidth = math.clamp(math.ceil(widest) + 14, 44, 90)
 					end
 
-					updateSliderBarSize()
-
-					sliderName:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSliderBarSize)
-					section:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSliderBarSize)
+					table.insert(sliderGroup.items, { row = slider, name = sliderName, value = sliderValue, bar = sliderBar, valueWidth = valueWidth })
+					sliderGroup.layout()
+					slider:GetPropertyChangedSignal("AbsoluteSize"):Connect(sliderGroup.queue)
+					sliderName:GetPropertyChangedSignal("Text"):Connect(sliderGroup.queue)
 
 					function SliderFunctions:UpdateName(Name)
-						sliderName = Name
+						sliderName.Text = Name
 					end
 					function SliderFunctions:SetVisibility(State)
 						slider.Visible = State
@@ -2589,7 +2642,6 @@ function MacLib:Window(Settings)
 					local InputFunctions = { Settings = Settings, IgnoreConfig = false, Class = "Input" }
 					local input = Instance.new("Frame")
 					input.Name = "Input"
-					input.AutomaticSize = Enum.AutomaticSize.Y
 					input.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 					input.BackgroundTransparency = 1
 					input.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -2607,9 +2659,9 @@ function MacLib:Window(Settings)
 					inputName.TextTransparency = 0.5
 					inputName.TextTruncate = Enum.TextTruncate.AtEnd
 					inputName.TextXAlignment = Enum.TextXAlignment.Left
-					inputName.TextYAlignment = Enum.TextYAlignment.Top
+					inputName.TextYAlignment = Enum.TextYAlignment.Center
 					inputName.AnchorPoint = Vector2.new(0, 0.5)
-					inputName.AutomaticSize = Enum.AutomaticSize.XY
+					inputName.Size = UDim2.new(1, 0, 0, 16)
 					inputName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 					inputName.BackgroundTransparency = 1
 					inputName.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -2633,8 +2685,9 @@ function MacLib:Window(Settings)
 					inputBox.ClipsDescendants = true
 					inputBox.LayoutOrder = 1
 					inputBox.Position = UDim2.fromScale(1, 0.5)
-					inputBox.Size = UDim2.fromOffset(21, 21)
+					inputBox.Size = UDim2.fromOffset(21, 22)
 					inputBox.TextXAlignment = Enum.TextXAlignment.Right
+					inputBox.TextTruncate = Enum.TextTruncate.AtEnd
 
 					local inputBoxUICorner = Instance.new("UICorner")
 					inputBoxUICorner.Name = "InputBoxUICorner"
@@ -2698,18 +2751,50 @@ function MacLib:Window(Settings)
 						AcceptedCharacters = CharacterSubs[InputFunctions.Settings.AcceptedCharacters] or CharacterSubs.All
 					end
 
-					InputBox.AutomaticSize = Enum.AutomaticSize.X
+					-- Mesma regra do slider: nome e caixa na mesma linha quando cabem, senao a caixa vai para baixo.
+					local INPUT_GAP = 12
+					local function updateInputLayout()
+						local rowWidth = Input.AbsoluteSize.X / math.max(baseUIScale.Scale, 0.01)
+						if rowWidth < 1 then return end
 
-					local function checkSize()
-						local nameWidth = InputName.AbsoluteSize.X
-						local totalWidth = Input.AbsoluteSize.X
+						local nameWidth = measureText(InputName.Text, 12)
+						local hintWidth = measureText(InputBox.PlaceholderText, 12) + 12
+						local minBox = math.clamp(hintWidth, 60, 140)
+						local inline = nameWidth + INPUT_GAP + minBox <= rowWidth
 
-						local maxWidth = (totalWidth - nameWidth - 20) / baseUIScale.Scale
-						Constraint.MaxSize = Vector2.new(maxWidth, 9e9)
+						if inline then
+							local boxRoom = rowWidth - nameWidth - INPUT_GAP
+							Input.Size = UDim2.new(1, 0, 0, 38)
+							InputName.Position = UDim2.new(0, 0, 0.5, 0)
+							InputName.Size = UDim2.new(0, nameWidth + 2, 0, 16)
+							InputBox.AutomaticSize = Enum.AutomaticSize.X
+							InputBox.AnchorPoint = Vector2.new(1, 0.5)
+							InputBox.Position = UDim2.new(1, 0, 0.5, 0)
+							InputBox.Size = UDim2.fromOffset(minBox, 22)
+							InputBox.TextXAlignment = Enum.TextXAlignment.Right
+							Constraint.MinSize = Vector2.new(minBox, 22)
+							Constraint.MaxSize = Vector2.new(boxRoom, 22)
+						else
+							Input.Size = UDim2.new(1, 0, 0, 58)
+							InputName.Position = UDim2.new(0, 0, 0, 11)
+							InputName.Size = UDim2.new(1, 0, 0, 16)
+							InputBox.AutomaticSize = Enum.AutomaticSize.None
+							InputBox.AnchorPoint = Vector2.new(0, 0)
+							InputBox.Position = UDim2.new(0, 0, 0, 26)
+							InputBox.Size = UDim2.new(1, 0, 0, 26)
+							InputBox.TextXAlignment = Enum.TextXAlignment.Left
+							Constraint.MinSize = Vector2.new(0, 0)
+							Constraint.MaxSize = Vector2.new(math.huge, math.huge)
+						end
 					end
 
-					checkSize()
-					InputName:GetPropertyChangedSignal("AbsoluteSize"):Connect(checkSize)
+					local function queueInputLayout()
+						task.spawn(updateInputLayout)
+					end
+
+					Input:GetPropertyChangedSignal("AbsoluteSize"):Connect(queueInputLayout)
+					InputName:GetPropertyChangedSignal("Text"):Connect(queueInputLayout)
+					InputBox:GetPropertyChangedSignal("PlaceholderText"):Connect(queueInputLayout)
 
 					InputBox.FocusLost:Connect(function()
 						local inputText = InputBox.Text
@@ -2723,6 +2808,7 @@ function MacLib:Window(Settings)
 					end)
 					InputBox.Text = InputFunctions.Settings.Default or ""
 					InputBox.PlaceholderText = InputFunctions.Settings.Placeholder or ""
+					updateInputLayout()
 
 					InputBox:GetPropertyChangedSignal("Text"):Connect(function()
 						InputBox.Text = AcceptedCharacters(InputBox.Text)
