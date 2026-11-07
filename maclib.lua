@@ -1179,6 +1179,8 @@ function MacLib:Window(Settings)
 
 
 	--// Tradutor da UI (canto superior direito)
+	-- Fica num bloco do...end: as variaveis locais somem no fim e nao contam no limite de 200 da funcao.
+	do
 	-- Traduz os textos da UI com o Google Tradutor (HttpGet do executor). Os textos originais ficam guardados
 	-- e voltam ao escolher "English". Traducoes ficam em cache em arquivo para nao repetir pedidos.
 	local Translator = {
@@ -1749,7 +1751,13 @@ function MacLib:Window(Settings)
 	end
 
 
+	responsive.translatorButton = translatorButton
+	end
+
 	--// Busca (barra superior)
+	do
+	local Translator = WindowFunctions.Translator
+	local translatorButton = responsive.translatorButton
 	-- Procura abas e elementos (toggles, sliders, botoes...) de todas as abas; ao escolher um resultado,
 	-- abre a aba, rola ate o elemento e destaca ele.
 	local SEARCH_HEIGHT = TOUCH_UI and 32 or 28
@@ -2296,6 +2304,7 @@ function MacLib:Window(Settings)
 		if currentResults[1] then
 			goToResult(currentResults[1])
 		end
+	end
 	end
 
 	local drawerScrim = Instance.new("TextButton")
