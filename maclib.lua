@@ -260,6 +260,8 @@ function MacLib:Window(Settings)
 		tabColumns = {},
 		floatPosition = nil,
 		translatorWidth = Settings.Translator == false and 0 or 64,
+		searchEnabled = Settings.Search ~= false,
+		searchExpanded = false,
 	}
 
 	if Settings.AcrylicBlur ~= nil then
@@ -1408,6 +1410,9 @@ function MacLib:Window(Settings)
 	end
 
 	local function isExcluded(inst)
+		if inst:GetAttribute("MacLibTranslateHint") then
+			return false
+		end
 		local node = inst
 		while node and node ~= macLib do
 			if node:GetAttribute("MacLibNoTranslate") then
@@ -1683,6 +1688,9 @@ function MacLib:Window(Settings)
 		local left = math.clamp(right - LANGUAGE_MENU_WIDTH, 8, math.max(8, responsive.width - LANGUAGE_MENU_WIDTH - 8))
 
 		responsive.setDrawer(false)
+		if responsive.hideSearchResults then
+			responsive.hideSearchResults()
+		end
 		languageMenu.Position = UDim2.fromOffset(left, top)
 		languageMenu.Size = UDim2.fromOffset(LANGUAGE_MENU_WIDTH, math.max(height, LANGUAGE_ROW + 12))
 		languageMenu.CanvasPosition = Vector2.zero
@@ -1737,6 +1745,556 @@ function MacLib:Window(Settings)
 			task.defer(function()
 				Translator:SetLanguage(initial)
 			end)
+		end
+	end
+
+
+	--// Busca (barra superior)
+	-- Procura abas e elementos (toggles, sliders, botoes...) de todas as abas; ao escolher um resultado,
+	-- abre a aba, rola ate o elemento e destaca ele.
+	local SEARCH_HEIGHT = TOUCH_UI and 32 or 28
+	local SEARCH_ROW = TOUCH_UI and 46 or 40
+	local SEARCH_MAX_RESULTS = 30
+	local SEARCH_KINDS = {
+		Toggle = "ToggleName",
+		Slider = "SliderName",
+		Input = "InputName",
+		Keybind = "KeybindName",
+		Dropdown = "DropdownName",
+		Colorpicker = "KeybindName",
+		Button = "ButtonInteract",
+		Header = "HeaderText",
+		Paragraph = "ParagraphHeader",
+		Label = "LabelText",
+	}
+
+	local searchFrame = Instance.new("Frame")
+	searchFrame.Name = "Search"
+	searchFrame:SetAttribute("MacLibNoTranslate", true)
+	searchFrame.AnchorPoint = Vector2.new(1, 0.5)
+	searchFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	searchFrame.BackgroundTransparency = 0.96
+	searchFrame.BorderSizePixel = 0
+	searchFrame.Position = UDim2.new(1, 0, 0.5, 0)
+	searchFrame.Size = UDim2.fromOffset(200, SEARCH_HEIGHT)
+	searchFrame.Visible = responsive.searchEnabled
+	searchFrame.Parent = elements
+
+	local searchFrameCorner = Instance.new("UICorner")
+	searchFrameCorner.CornerRadius = UDim.new(0, 6)
+	searchFrameCorner.Parent = searchFrame
+
+	local searchFrameStroke = Instance.new("UIStroke")
+	searchFrameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	searchFrameStroke.Color = Color3.fromRGB(255, 255, 255)
+	searchFrameStroke.Transparency = 0.9
+	searchFrameStroke.Parent = searchFrame
+
+	local searchIconImage = Instance.new("ImageLabel")
+	searchIconImage.Name = "SearchIcon"
+	searchIconImage.AnchorPoint = Vector2.new(0, 0.5)
+	searchIconImage.BackgroundTransparency = 1
+	searchIconImage.Image = assets.searchIcon
+	searchIconImage.ImageColor3 = Color3.fromRGB(180, 180, 180)
+	searchIconImage.Position = UDim2.new(0, 10, 0.5, 0)
+	searchIconImage.Size = UDim2.fromOffset(12, 12)
+	searchIconImage.Parent = searchFrame
+
+	local searchInput = Instance.new("TextBox")
+	searchInput.Name = "SearchInput"
+	searchInput.AnchorPoint = Vector2.new(0, 0.5)
+	searchInput.BackgroundTransparency = 1
+	searchInput.ClearTextOnFocus = false
+	searchInput.FontFace = Font.new(assets.interFont)
+	searchInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+	searchInput.PlaceholderText = "Search..."
+	searchInput.Position = UDim2.new(0, 30, 0.5, 0)
+	searchInput.Size = UDim2.new(1, -56, 1, 0)
+	searchInput.Text = ""
+	searchInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+	searchInput.TextSize = 12
+	searchInput.TextTransparency = 0.1
+	searchInput.TextTruncate = Enum.TextTruncate.AtEnd
+	searchInput.TextXAlignment = Enum.TextXAlignment.Left
+	searchInput:SetAttribute("MacLibTranslateHint", true)
+	searchInput.Parent = searchFrame
+
+	local searchClear = Instance.new("TextButton")
+	searchClear.Name = "Clear"
+	searchClear.AnchorPoint = Vector2.new(1, 0.5)
+	searchClear.BackgroundTransparency = 1
+	searchClear.FontFace = Font.new(assets.interFont)
+	searchClear.Position = UDim2.new(1, -4, 0.5, 0)
+	searchClear.Size = UDim2.fromOffset(22, 22)
+	searchClear.Text = "\u{2715}"
+	searchClear.TextColor3 = Color3.fromRGB(255, 255, 255)
+	searchClear.TextSize = 11
+	searchClear.TextTransparency = 0.5
+	searchClear.Visible = false
+	searchClear.Parent = searchFrame
+
+	-- Botao de lupa usado quando a janela e estreita (celular em pe)
+	local searchButton = makeTopbarButton("SearchButton")
+	searchButton:SetAttribute("MacLibNoTranslate", true)
+	searchButton.AnchorPoint = Vector2.new(1, 0.5)
+
+	local searchButtonIcon = Instance.new("ImageLabel")
+	searchButtonIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+	searchButtonIcon.BackgroundTransparency = 1
+	searchButtonIcon.Image = assets.searchIcon
+	searchButtonIcon.ImageColor3 = Color3.fromRGB(200, 200, 200)
+	searchButtonIcon.Position = UDim2.fromScale(0.5, 0.5)
+	searchButtonIcon.Size = UDim2.fromOffset(15, 15)
+	searchButtonIcon.Parent = searchButton
+
+	local searchResults = Instance.new("ScrollingFrame")
+	searchResults.Name = "SearchResults"
+	searchResults:SetAttribute("MacLibNoTranslate", true)
+	searchResults.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	searchResults.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+	searchResults.BorderSizePixel = 0
+	searchResults.BottomImage = ""
+	searchResults.CanvasSize = UDim2.new()
+	searchResults.ScrollBarImageTransparency = 0.6
+	searchResults.ScrollBarThickness = 3
+	searchResults.ScrollingDirection = Enum.ScrollingDirection.Y
+	searchResults.TopImage = ""
+	searchResults.Visible = false
+	searchResults.ZIndex = 8
+	searchResults.Parent = base
+
+	local searchResultsCorner = Instance.new("UICorner")
+	searchResultsCorner.CornerRadius = UDim.new(0, 8)
+	searchResultsCorner.Parent = searchResults
+
+	local searchResultsStroke = Instance.new("UIStroke")
+	searchResultsStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	searchResultsStroke.Color = Color3.fromRGB(255, 255, 255)
+	searchResultsStroke.Transparency = 0.9
+	searchResultsStroke.Parent = searchResults
+
+	local searchResultsPadding = Instance.new("UIPadding")
+	searchResultsPadding.PaddingTop = UDim.new(0, 6)
+	searchResultsPadding.PaddingBottom = UDim.new(0, 6)
+	searchResultsPadding.PaddingLeft = UDim.new(0, 6)
+	searchResultsPadding.PaddingRight = UDim.new(0, 6)
+	searchResultsPadding.Parent = searchResults
+
+	local searchResultsLayout = Instance.new("UIListLayout")
+	searchResultsLayout.Padding = UDim.new(0, 2)
+	searchResultsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	searchResultsLayout.Parent = searchResults
+
+	function responsive.layoutTopbar()
+		local compact = responsive.compact
+		local translatorRoom = responsive.translatorWidth > 0 and responsive.translatorWidth + 8 or 0
+		local closeRoom = compact and 44 or 0
+		local searchOn = responsive.searchEnabled
+
+		translatorButton.Position = UDim2.new(1, -closeRoom, 0.5, 0)
+		searchButton.Visible = false
+		currentTab.Visible = true
+
+		if compact then
+			local rightRoom = closeRoom + translatorRoom
+			if searchOn and responsive.searchExpanded then
+				-- A busca ocupa a barra inteira no lugar do titulo da aba.
+				currentTab.Visible = false
+				searchFrame.Visible = true
+				searchFrame.AnchorPoint = Vector2.new(0, 0.5)
+				searchFrame.Position = UDim2.new(0, 44, 0.5, 0)
+				searchFrame.Size = UDim2.new(1, -(44 + rightRoom), 0, SEARCH_HEIGHT)
+			else
+				searchFrame.Visible = false
+				searchButton.Visible = searchOn
+				searchButton.Position = UDim2.new(1, -rightRoom, 0.5, 0)
+			end
+			currentTab.Position = UDim2.new(0, 44, 0.5, 0)
+			currentTab.Size = UDim2.new(1, -(44 + rightRoom + (searchOn and 40 or 0)), 0, 0)
+		else
+			responsive.searchExpanded = false
+			local searchWidth = searchOn and math.clamp(math.floor((responsive.contentWidth or 400) * 0.38), 150, 240) or 0
+			searchFrame.Visible = searchOn
+			searchFrame.AnchorPoint = Vector2.new(1, 0.5)
+			searchFrame.Position = UDim2.new(1, -translatorRoom, 0.5, 0)
+			searchFrame.Size = UDim2.fromOffset(searchWidth, SEARCH_HEIGHT)
+			currentTab.Position = UDim2.fromScale(0, 0.5)
+			currentTab.Size = UDim2.new(1, -(translatorRoom + searchWidth + (searchOn and 12 or 0)), 0, 0)
+		end
+	end
+
+	local function plainLower(text)
+		return (tostring(text or ""):gsub("<[^>]->", ""):lower())
+	end
+
+	-- Texto mostrado e texto original (antes da traducao); a busca aceita os dois.
+	local function searchTexts(label)
+		local shown = label.Text
+		local info = Translator.tracked[label]
+		local original = info and info.original or shown
+		local function head(text)
+			return (text:match("^(.-) • ") or text)
+		end
+		return head(shown), head(original)
+	end
+
+	local function matchScore(query, ...)
+		local best
+		for _, text in ipairs({ ... }) do
+			local lowered = plainLower(text)
+			local start = lowered:find(query, 1, true)
+			if start then
+				local score
+				if start == 1 then
+					score = 3
+				elseif lowered:sub(start - 1, start - 1):match("[%s%p]") then
+					score = 2
+				else
+					score = 1
+				end
+				best = math.max(best or 0, score)
+			end
+		end
+		return best
+	end
+
+	local function collectSearchResults(query)
+		query = plainLower(query):gsub("^%s+", ""):gsub("%s+$", "")
+		if query == "" then return {} end
+
+		local tabList = {}
+		for switcher, record in pairs(tabs) do
+			if record.window == base and record.select then
+				table.insert(tabList, { switcher = switcher, record = record })
+			end
+		end
+		table.sort(tabList, function(a, b)
+			return a.record.order < b.record.order
+		end)
+
+		local results = {}
+		for _, tab in ipairs(tabList) do
+			local record = tab.record
+			local tabShown, tabOriginal = searchTexts(record.switcherName)
+
+			local tabScore = matchScore(query, tabShown, tabOriginal)
+			if tabScore then
+				table.insert(results, { title = tabShown, subtitle = "", record = record, score = tabScore + 10 })
+			end
+
+			for _, column in ipairs(record.scrolling:GetChildren()) do
+				if column:IsA("Frame") then
+					for _, section in ipairs(column:GetChildren()) do
+						if section.Name == "Section" and section.Visible then
+							local sectionTitle
+							for _, element in ipairs(section:GetChildren()) do
+								local labelName = SEARCH_KINDS[element.Name]
+								local label = labelName and element:FindFirstChild(labelName, true)
+								if label and element:IsA("GuiObject") and element.Visible then
+									local shown, original = searchTexts(label)
+									if element.Name == "Header" and not sectionTitle then
+										sectionTitle = shown
+									end
+
+									local score = shown ~= "" and matchScore(query, shown, original)
+									if score then
+										local subtitle = tabShown
+										if sectionTitle and sectionTitle ~= shown then
+											subtitle ..= "  \u{203A}  " .. sectionTitle
+										end
+										table.insert(results, {
+											title = shown,
+											subtitle = subtitle,
+											record = record,
+											element = element,
+											score = score,
+										})
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+
+		-- Abas primeiro, depois quem comeca com o texto buscado; empate mantem a ordem da UI.
+		for index, result in ipairs(results) do
+			result.index = index
+		end
+		table.sort(results, function(a, b)
+			if a.score ~= b.score then
+				return a.score > b.score
+			end
+			return a.index < b.index
+		end)
+		while #results > SEARCH_MAX_RESULTS do
+			table.remove(results)
+		end
+		return results
+	end
+
+	local currentResults = {}
+
+	local function hideSearchResults()
+		searchResults.Visible = false
+	end
+	responsive.hideSearchResults = hideSearchResults
+
+	local function collapseSearch()
+		hideSearchResults()
+		if responsive.compact and responsive.searchExpanded then
+			responsive.searchExpanded = false
+			responsive.layoutTopbar()
+		end
+	end
+
+	local function highlightElement(element)
+		local scale = math.max(baseUIScale.Scale, 0.01)
+		local glow = Instance.new("Frame")
+		glow.Name = "SearchHighlight"
+		glow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		glow.BackgroundTransparency = 0.88
+		glow.BorderSizePixel = 0
+		glow.Position = UDim2.fromOffset(
+			(element.AbsolutePosition.X - base.AbsolutePosition.X) / scale - 8,
+			(element.AbsolutePosition.Y - base.AbsolutePosition.Y) / scale - 4
+		)
+		glow.Size = UDim2.fromOffset(element.AbsoluteSize.X / scale + 16, element.AbsoluteSize.Y / scale + 8)
+		glow.ZIndex = 2
+		glow.Parent = base
+
+		local glowCorner = Instance.new("UICorner")
+		glowCorner.CornerRadius = UDim.new(0, 6)
+		glowCorner.Parent = glow
+
+		local glowStroke = Instance.new("UIStroke")
+		glowStroke.Color = Color3.fromRGB(255, 255, 255)
+		glowStroke.Transparency = 0.4
+		glowStroke.Parent = glow
+
+		task.delay(0.9, function()
+			local fade = TweenInfo.new(0.6, Enum.EasingStyle.Sine)
+			Tween(glow, fade, { BackgroundTransparency = 1 }):Play()
+			local last = Tween(glowStroke, fade, { Transparency = 1 })
+			last.Completed:Connect(function()
+				glow:Destroy()
+			end)
+			last:Play()
+		end)
+	end
+
+	local function goToResult(result)
+		hideSearchResults()
+		searchInput:ReleaseFocus()
+		collapseSearch()
+		responsive.setDrawer(false)
+
+		result.record.select()
+		local scrolling = result.record.scrolling
+
+		task.spawn(function()
+			-- Espera a aba entrar na tela para as posicoes estarem certas.
+			RunService.Heartbeat:Wait()
+			RunService.Heartbeat:Wait()
+
+			local scale = math.max(baseUIScale.Scale, 0.01)
+			local target = 0
+			if result.element then
+				local offset = (result.element.AbsolutePosition.Y - scrolling.AbsolutePosition.Y) / scale
+				target = scrolling.CanvasPosition.Y + offset - 24
+			end
+			local maxScroll = math.max(0, (scrolling.AbsoluteCanvasSize.Y - scrolling.AbsoluteWindowSize.Y) / scale)
+			target = math.clamp(target, 0, maxScroll)
+
+			local scroll = Tween(scrolling, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				CanvasPosition = Vector2.new(0, target)
+			})
+			if result.element then
+				scroll.Completed:Connect(function()
+					highlightElement(result.element)
+				end)
+			end
+			scroll:Play()
+		end)
+	end
+
+	local function showSearchResults()
+		for _, child in ipairs(searchResults:GetChildren()) do
+			if child:IsA("GuiButton") or child.Name == "Empty" then
+				child:Destroy()
+			end
+		end
+
+		local query = searchInput.Text
+		searchClear.Visible = query ~= ""
+		if query:gsub("%s", "") == "" then
+			currentResults = {}
+			hideSearchResults()
+			return
+		end
+
+		currentResults = collectSearchResults(query)
+
+		if #currentResults == 0 then
+			local empty = Instance.new("TextLabel")
+			empty.Name = "Empty"
+			empty.BackgroundTransparency = 1
+			empty.FontFace = Font.new(assets.interFont)
+			empty.Size = UDim2.new(1, 0, 0, SEARCH_ROW - 8)
+			empty.Text = "\u{2014}"
+			empty.TextColor3 = Color3.fromRGB(255, 255, 255)
+			empty.TextSize = 13
+			empty.TextTransparency = 0.6
+			empty.ZIndex = 9
+			empty.Parent = searchResults
+		end
+
+		for index, result in ipairs(currentResults) do
+			local row = Instance.new("TextButton")
+			row.Name = "Result"
+			row.AutoButtonColor = false
+			row.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			row.BackgroundTransparency = index == 1 and 0.96 or 1
+			row.BorderSizePixel = 0
+			row.LayoutOrder = index
+			row.Size = UDim2.new(1, 0, 0, result.subtitle ~= "" and SEARCH_ROW or SEARCH_ROW - 10)
+			row.Text = ""
+			row.ZIndex = 9
+			row.Parent = searchResults
+
+			local rowCorner = Instance.new("UICorner")
+			rowCorner.CornerRadius = UDim.new(0, 6)
+			rowCorner.Parent = row
+
+			local titleLabel = Instance.new("TextLabel")
+			titleLabel.BackgroundTransparency = 1
+			titleLabel.FontFace = Font.new(assets.interFont, result.element and Enum.FontWeight.Regular or Enum.FontWeight.SemiBold, Enum.FontStyle.Normal)
+			titleLabel.Position = UDim2.new(0, 10, 0, result.subtitle ~= "" and 6 or 0)
+			titleLabel.RichText = false
+			titleLabel.Size = UDim2.new(1, -20, 0, result.subtitle ~= "" and 16 or SEARCH_ROW - 10)
+			titleLabel.Text = (result.element and "" or "\u{2192} ") .. result.title:gsub("<[^>]->", "")
+			titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+			titleLabel.TextSize = 13
+			titleLabel.TextTransparency = 0.1
+			titleLabel.TextTruncate = Enum.TextTruncate.AtEnd
+			titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+			titleLabel.ZIndex = 9
+			titleLabel.Parent = row
+
+			if result.subtitle ~= "" then
+				local subtitleLabel = Instance.new("TextLabel")
+				subtitleLabel.BackgroundTransparency = 1
+				subtitleLabel.FontFace = Font.new(assets.interFont)
+				subtitleLabel.Position = UDim2.new(0, 10, 0, 22)
+				subtitleLabel.Size = UDim2.new(1, -20, 0, 14)
+				subtitleLabel.Text = result.subtitle:gsub("<[^>]->", "")
+				subtitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+				subtitleLabel.TextSize = 11
+				subtitleLabel.TextTransparency = 0.6
+				subtitleLabel.TextTruncate = Enum.TextTruncate.AtEnd
+				subtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+				subtitleLabel.ZIndex = 9
+				subtitleLabel.Parent = row
+			end
+
+			row.MouseEnter:Connect(function()
+				row.BackgroundTransparency = 0.95
+			end)
+			row.MouseLeave:Connect(function()
+				row.BackgroundTransparency = 1
+			end)
+			row.MouseButton1Click:Connect(function()
+				goToResult(result)
+			end)
+		end
+
+		-- Posiciona a lista logo abaixo da caixa de busca, sem sair da janela.
+		local scale = math.max(baseUIScale.Scale, 0.01)
+		local boxTopLeft = (searchFrame.AbsolutePosition - base.AbsolutePosition) / scale
+		local boxSize = searchFrame.AbsoluteSize / scale
+		local width = math.min(math.max(boxSize.X, 280), responsive.width - 16)
+		local left = math.clamp(boxTopLeft.X + boxSize.X - width, 8, math.max(8, responsive.width - width - 8))
+		local top = boxTopLeft.Y + boxSize.Y + 6
+
+		local contentHeight = 12
+		for _, result in ipairs(currentResults) do
+			contentHeight += (result.subtitle ~= "" and SEARCH_ROW or SEARCH_ROW - 10) + 2
+		end
+		if #currentResults == 0 then
+			contentHeight += SEARCH_ROW - 8
+		end
+
+		responsive.closeLanguageMenu()
+		searchResults.Position = UDim2.fromOffset(left, top)
+		searchResults.Size = UDim2.fromOffset(width, math.max(math.min(contentHeight, responsive.height - top - 8), SEARCH_ROW))
+		searchResults.CanvasPosition = Vector2.zero
+		searchResults.Visible = true
+	end
+
+	searchInput:GetPropertyChangedSignal("Text"):Connect(showSearchResults)
+	searchInput.Focused:Connect(function()
+		if searchInput.Text ~= "" then
+			showSearchResults()
+		end
+	end)
+	searchInput.FocusLost:Connect(function(enterPressed)
+		if enterPressed and currentResults[1] then
+			goToResult(currentResults[1])
+		end
+	end)
+
+	searchClear.MouseButton1Click:Connect(function()
+		searchInput.Text = ""
+		hideSearchResults()
+		searchInput:CaptureFocus()
+	end)
+
+	searchButton.MouseButton1Click:Connect(function()
+		responsive.searchExpanded = true
+		responsive.setDrawer(false)
+		responsive.layoutTopbar()
+		searchInput:CaptureFocus()
+	end)
+
+	-- Clique/toque fora fecha a lista (e a busca expandida do celular, se estiver vazia).
+	UserInputService.InputBegan:Connect(function(input, gameProcessed)
+		if input.UserInputType == Enum.UserInputType.Keyboard then
+			-- Ctrl+F abre a busca no PC
+			if not gameProcessed and input.KeyCode == Enum.KeyCode.F and base.Visible and responsive.searchEnabled
+				and (UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)) then
+				if responsive.compact then
+					responsive.searchExpanded = true
+					responsive.layoutTopbar()
+				end
+				searchInput:CaptureFocus()
+			end
+			return
+		end
+
+		if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+		if not (searchResults.Visible or responsive.searchExpanded) then return end
+
+		local position = Vector2.new(input.Position.X, input.Position.Y)
+		local function inside(gui)
+			if not gui.Visible then return false end
+			local topLeft = gui.AbsolutePosition
+			local bottomRight = topLeft + gui.AbsoluteSize
+			return position.X >= topLeft.X and position.X <= bottomRight.X and position.Y >= topLeft.Y and position.Y <= bottomRight.Y
+		end
+
+		if not inside(searchResults) and not inside(searchFrame) and not inside(searchButton) then
+			hideSearchResults()
+			if searchInput.Text == "" then
+				collapseSearch()
+			end
+		end
+	end)
+
+	function WindowFunctions:Search(text)
+		searchInput.Text = tostring(text or "")
+		if currentResults[1] then
+			goToResult(currentResults[1])
 		end
 	end
 
@@ -1864,11 +2422,6 @@ function MacLib:Window(Settings)
 
 			uIPadding2.PaddingLeft = UDim.new(0, 12)
 			uIPadding2.PaddingRight = UDim.new(0, 12)
-			currentTab.Position = UDim2.new(0, 44, 0.5, 0)
-			currentTab.Size = UDim2.new(1, -(88 + responsive.translatorWidth), 0, 0)
-			if responsive.placeTranslator then
-				responsive.placeTranslator(-44)
-			end
 			globalSettings.Position = UDim2.fromOffset(12, 70)
 
 			if not wasCompact then
@@ -1898,15 +2451,11 @@ function MacLib:Window(Settings)
 
 			uIPadding2.PaddingLeft = UDim.new(0, 20)
 			uIPadding2.PaddingRight = UDim.new(0, 20)
-			currentTab.Position = UDim2.fromScale(0, 0.5)
-			currentTab.Size = UDim2.new(1, -(responsive.translatorWidth + 12), 0, 0)
-			if responsive.placeTranslator then
-				responsive.placeTranslator(0)
-			end
 			globalSettings.Position = UDim2.fromScale(0.298, 0.104)
 		end
 
 		responsive.contentWidth = contentWidth
+		responsive.layoutTopbar()
 		for _, tab in ipairs(responsive.tabColumns) do
 			applyTabColumns(tab, contentWidth)
 		end
@@ -1921,6 +2470,7 @@ function MacLib:Window(Settings)
 		if not base.Visible then
 			setDrawer(false, true)
 			responsive.closeLanguageMenu()
+			responsive.hideSearchResults()
 		end
 		updateFloatingButton()
 	end)
@@ -5946,6 +6496,10 @@ function MacLib:Window(Settings)
 			end
 
 			tabs[tabSwitcher] = {
+				order = tabSwitcher.LayoutOrder,
+				select = SelectCurrentTab,
+				scrolling = elementsScrolling,
+				window = base,
 				tabContent = elements1,
 				tabStroke = tabSwitcherUIStroke,
 				switcherImage = tabImage,
